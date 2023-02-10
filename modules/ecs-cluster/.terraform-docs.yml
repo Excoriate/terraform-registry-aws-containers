@@ -1,0 +1,60 @@
+---
+formatter: markdown table
+
+header-from: main.tf
+# (// FIXME: Remove, refactor or change. (Template)
+content: |-
+    # ☁️ ECS cluster module
+    ## Description
+    {{ .Header }}
+    This module creates an ECS cluster with the following features:
+    * 🚀 **ECS cluster**: ECS cluster with the specified name.
+    * 🚀 **ECS cluster capacity provider**: ECS cluster capacity provider with the specified name.
+    * 🚀 **ECS cluster capacity provider strategy**: ECS cluster capacity provider strategy with the specified name.
+
+    ---
+    ## Example
+    Examples of this module's usage are available in the [examples](./examples) folder.
+
+    ```hcl
+    {{ include "../../examples/ecs-cluster/basic/main.tf" }}
+    ```
+    ```hcl
+    {{ include "../../examples/ecs-cluster/basic/config/fixtures.tfvars" }}
+    ```
+
+    An example of multiple clusters, created at once with some of them using capacity providers:
+    ```hcl
+    {{ include "../../examples/ecs-cluster/basic/config/fixtures-capacity-provider.tfvars" }}
+    ```
+
+    For module composition, It's recommended to take a look at the module's `outputs` to understand what's available:
+    ```hcl
+    {{ include "outputs.tf" }}
+    ```
+    ---
+
+    ## Module's documentation
+    (This documentation is auto-generated using [terraform-docs](https://terraform-docs.io))
+    {{ .Providers }}
+
+    {{ .Modules }}
+
+    {{ .Resources }}
+
+    {{ .Requirements }}
+
+    {{ .Inputs }}
+
+    {{ .Outputs }}
+
+output:
+    file: README.md
+    mode: inject
+    template: |-
+        <!-- BEGIN_TF_DOCS -->
+        {{ .Content }}
+        <!-- END_TF_DOCS -->
+settings:
+    anchor: true
+    color: true
