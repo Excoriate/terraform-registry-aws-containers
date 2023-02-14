@@ -1,12 +1,14 @@
 ---
-name: Auto Tag Release Stable
+name: Generate New Version
 
 on:
     push:
         branches:
             - main
             - master
+            - production
         paths-ignore:
+            - TaskFile.yml
             - CHANGELOG.md
 
 defaults:
@@ -15,19 +17,17 @@ defaults:
 
 jobs:
 
-    generate-tag:
+    generate-version:
+        permissions: write-all
         runs-on: ubuntu-latest
-        if: |
-            ${{ github.event_name == 'push' && (contains(github.ref, 'main') || contains(github.ref, 'master')) }}
-
         steps:
             - name: Checkout Repository
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
               with:
                   fetch-depth: '0'
 
             - name: Generate tag & bump version
-              uses: anothrNick/github-tag-action@1.36.0
+              uses: anothrNick/github-tag-action@1.61.0
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   WITH_V: true
