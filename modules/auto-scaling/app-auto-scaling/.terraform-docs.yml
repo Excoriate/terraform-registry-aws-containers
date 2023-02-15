@@ -1,0 +1,60 @@
+---
+formatter: markdown table
+
+header-from: main.tf
+content: |-
+    # ☁️ Auto-scaling module for ECS (services)
+    ## Description
+    {{ .Header }}
+    This module enables an auto-scaling strategy for an application or service that's intended to run on ECS (service).
+    * 🚀 **ECS service auto-scaling**: ECS service auto-scaling with the specified name.
+    * 🚀 **ECS service auto-scaling policy**: ECS service auto-scaling policy with the specified name.
+    * 🚀 **ECS service auto-scaling target**: ECS service auto-scaling target with the specified name.
+
+    Currently, this module doesnt' support other services, only `ECS service` for now. Future services will be added soon.
+
+    ---
+    ## Example
+    Examples of this module's usage are available in the [examples](./examples) folder.
+
+    ```hcl
+    {{ include "../../../examples/auto-scaling/app-auto-scaling/basic/main.tf" }}
+    ```
+    ```hcl
+    {{ include "../../../examples/auto-scaling/app-auto-scaling/basic/config/fixtures-multiple.tfvars" }}
+    ```
+
+    ```hcl
+    {{ include "../../../examples/auto-scaling/app-auto-scaling/basic/config/fixtures-with-ecs-config.tfvars" }}
+    ```
+
+    For module composition, It's recommended to take a look at the module's `outputs` to understand what's available:
+    ```hcl
+    {{ include "outputs.tf" }}
+    ```
+    ---
+
+    ## Module's documentation
+    (This documentation is auto-generated using [terraform-docs](https://terraform-docs.io))
+    {{ .Providers }}
+
+    {{ .Modules }}
+
+    {{ .Resources }}
+
+    {{ .Requirements }}
+
+    {{ .Inputs }}
+
+    {{ .Outputs }}
+
+output:
+    file: README.md
+    mode: inject
+    template: |-
+        <!-- BEGIN_TF_DOCS -->
+        {{ .Content }}
+        <!-- END_TF_DOCS -->
+settings:
+    anchor: true
+    color: true

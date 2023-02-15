@@ -44,10 +44,11 @@ The documentation is **automatically generated** by [terraform-docs](https://ter
 
 ### Capabilities
 
-| Module                       | Status   | Description                                         |
-|------------------------------|----------|-----------------------------------------------------|
-| `aws-ecr-container-registry` | Stable ✅ | Create a fully managed, elastic container registry. |
-| `aws-ecs-cluster`            | Stable ✅ | Create an ECS Cluster.                              |
+| Module                       | Status   | Description                                                                  |
+|------------------------------|----------|------------------------------------------------------------------------------|
+| `aws-ecr-container-registry` | Stable ✅ | Create a fully managed, elastic container registry.                          |
+| `aws-ecs-cluster`            | Stable ✅ | Create an ECS Cluster.                                                       |
+| `aws-app-autoscaling`        | Stable ✅ | Auto-scaling module, for different services. Currently it's supported `ECS`. |
 
 
 
