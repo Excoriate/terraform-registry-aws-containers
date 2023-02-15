@@ -1,0 +1,47 @@
+---
+formatter: markdown table
+
+header-from: main.tf
+content: |-
+    # ☁️ ECS Task definition module.
+    ## Description
+    {{ .Header }}
+    This module creates an ECS task definition with the specified name.
+    * 🚀 **ECS task definition**: ECS task definition with the specified name.
+    * 🚀 **ECS task definition revision**: ECS task definition revision with the specified name.
+
+    This module pretends to be used as a safer way to create ECS task definitions, by using the `terraform` way to create them, and parsing the resulting object as a valid .json
+    that can be used in an ECS service.
+
+    ---
+
+    For module composition, It's recommended to take a look at the module's `outputs` to understand what's available:
+    ```hcl
+    {{ include "outputs.tf" }}
+    ```
+    ---
+
+    ## Module's documentation
+    (This documentation is auto-generated using [terraform-docs](https://terraform-docs.io))
+    {{ .Providers }}
+
+    {{ .Modules }}
+
+    {{ .Resources }}
+
+    {{ .Requirements }}
+
+    {{ .Inputs }}
+
+    {{ .Outputs }}
+
+output:
+    file: README.md
+    mode: inject
+    template: |-
+        <!-- BEGIN_TF_DOCS -->
+        {{ .Content }}
+        <!-- END_TF_DOCS -->
+settings:
+    anchor: true
+    color: true
