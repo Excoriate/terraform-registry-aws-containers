@@ -61,3 +61,13 @@ resource "aws_iam_role_policy_attachment" "ecs_task_iam_policy_default_doc" {
   policy_arn = aws_iam_policy.ecs_task_iam_policy_default[each.key].arn
   role       = aws_iam_role.this[each.key].name
 }
+
+/*
+  * This logic is enabled whenever the 'root' module is passing extra IAM policy ARNs that should be attached to the IAM task role.
+*/
+
+resource "aws_iam_role_policy_attachment" "ecs_task_iam_policy_default_doc" {
+  for_each   = { for k, v in local.task_config_to_create : k => v if v["is_extra_iam_policy_arns_enabled"] }
+  policy_arn = each.value["extra_iam_policy_arns"]
+  role       = aws_iam_role.this[each.key].name
+}

@@ -20,13 +20,15 @@ locals {
       cpu                            = t["cpu"] == null ? 256 : t["cpu"]
       memory                         = t["memory"] == null ? 512 : t["memory"]
       // Task role ARN
-      task_role_arn        = t["task_role_arn"] == null ? null : trimspace(t["task_role_arn"])
-      permissions_boundary = t["permissions_boundary"] == null ? null : trimspace(t["permissions_boundary"])
+      task_role_arn         = t["task_role_arn"] == null ? null : trimspace(t["task_role_arn"])
+      permissions_boundary  = t["permissions_boundary"] == null ? null : trimspace(t["permissions_boundary"])
+      extra_iam_policy_arns = t["enable_extra_iam_policies_arn"]
 
       // feature flags
       is_default_task_role_to_be_created        = t["task_role_arn"] == null
       is_default_permissions_enabled            = t["enable_default_permissions"]
       is_container_definition_from_file_enabled = t["container_definition_from_file"] != null && t["container_definition_from_json"] == null
+      is_extra_iam_policy_arns_enabled          = t["enable_extra_iam_policies_arn"] == null ? [] : length(t["enable_extra_iam_policies_arn"]) > 0 ? true : false
     }
   ]
 
@@ -41,13 +43,15 @@ locals {
       cpu                            = t["cpu"]
       memory                         = t["memory"]
       // Permissions.
-      task_role_arn        = t["task_role_arn"]
-      permissions_boundary = t["permissions_boundary"]
+      task_role_arn         = t["task_role_arn"]
+      permissions_boundary  = t["permissions_boundary"]
+      extra_iam_policy_arns = t["extra_iam_policy_arns"]
 
       // Feature flags.
       is_default_task_role_to_be_created        = t["is_default_task_role_to_be_created"]
       is_container_definition_from_file_enabled = t["is_container_definition_from_file_enabled"]
       is_default_permissions_enabled            = t["is_default_permissions_enabled"]
+      is_extra_iam_policy_arns_enabled          = t["is_extra_iam_policy_arns_enabled"]
     }
   }
 }
