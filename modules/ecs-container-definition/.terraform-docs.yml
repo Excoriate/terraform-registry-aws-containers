@@ -3,17 +3,29 @@ formatter: markdown table
 
 header-from: main.tf
 content: |-
-    # ☁️ ECS Task definition module.
+    # ☁️ ECS Container definition module.
     ## Description
     {{ .Header }}
-    This module creates an ECS task definition with the specified name.
-    * 🚀 **ECS task definition**: ECS task definition with the specified name.
-    * 🚀 **ECS task definition revision**: ECS task definition revision with the specified name.
+    This module is inspired by the Cloudposs module [terraform-aws-ecs-container-definition](github.com/cloudposse/terraform-aws-ecs-container-definition), but it's not a fork of it.
+    Essentially, this module creates a validated JSON structure that can be used in an ECS task definition. Its current capabilities are:
+    - Create a container definition with a single container
+    - Create a container definition with multiple containers
+    - Create a container definition with multiple containers and multiple volumes
+    - Create a container definition with multiple containers and multiple volumes and multiple secrets
+    - Create a container definition with multiple containers and multiple volumes and multiple secrets and multiple environment variables
+    - Create a container definition with multiple containers and multiple volumes and multiple secrets and multiple environment variables and multiple port mapping
+    - Create a container definition with multiple containers and multiple volumes and multiple secrets and multiple environment variables and multiple port mapping and multiple log configuration
 
-    This module pretends to be used as a safer way to create ECS task definitions, by using the `terraform` way to create them, and parsing the resulting object as a valid .json
-    that can be used in an ECS service.
+    For more information about the container definition, please refer to the [AWS documentation](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#container_definitions).
 
     ---
+
+    An example implementing a complete set of features, and settings for a container definition:
+      ```hcl
+      {{ include "../../examples/ecs-container-definition/basic/config/fixtures.tfvars" }}
+
+      ```
+
 
     For module composition, It's recommended to take a look at the module's `outputs` to understand what's available:
     ```hcl

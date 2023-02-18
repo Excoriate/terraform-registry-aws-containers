@@ -58,8 +58,8 @@ locals {
   user = var.firelens_configuration != null ? "0" : var.user
 
   container_definition = {
-    name                   = var.container_name
-    image                  = var.container_image
+    name                   = lower(trimspace(var.container_name))
+    image                  = trimspace(var.container_image)
     essential              = var.essential
     entryPoint             = var.entrypoint
     command                = var.command

@@ -1,15 +1,86 @@
 <!-- BEGIN_TF_DOCS -->
-# ☁️ ECS Task definition module.
+# ☁️ ECS Container definition module.
 ## Description
 
-This module creates an ECS task definition with the specified name.
-* 🚀 **ECS task definition**: ECS task definition with the specified name.
-* 🚀 **ECS task definition revision**: ECS task definition revision with the specified name.
+This module is inspired by the Cloudposs module [terraform-aws-ecs-container-definition](github.com/cloudposse/terraform-aws-ecs-container-definition), but it's not a fork of it.
+Essentially, this module creates a validated JSON structure that can be used in an ECS task definition. Its current capabilities are:
+- Create a container definition with a single container
+- Create a container definition with multiple containers
+- Create a container definition with multiple containers and multiple volumes
+- Create a container definition with multiple containers and multiple volumes and multiple secrets
+- Create a container definition with multiple containers and multiple volumes and multiple secrets and multiple environment variables
+- Create a container definition with multiple containers and multiple volumes and multiple secrets and multiple environment variables and multiple port mapping
+- Create a container definition with multiple containers and multiple volumes and multiple secrets and multiple environment variables and multiple port mapping and multiple log configuration
 
-This module pretends to be used as a safer way to create ECS task definitions, by using the `terraform` way to create them, and parsing the resulting object as a valid .json
-that can be used in an ECS service.
+For more information about the container definition, please refer to the [AWS documentation](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#container_definitions).
 
 ---
+
+An example implementing a complete set of features, and settings for a container definition:
+```hcl
+container_name               = "app"
+container_image              = "cloudposse/geodesic"
+container_memory             = 256
+container_memory_reservation = 128
+container_cpu                = 256
+essential                    = true
+readonly_root_filesystem     = false
+
+container_environment = [
+  {
+    name  = "string_var"
+    value = "I am a string"
+  },
+  {
+    name  = "true_boolean_var"
+    value = true
+  },
+  {
+    name  = "false_boolean_var"
+    value = false
+  },
+  {
+    name  = "integer_var"
+    value = 42
+  }
+]
+
+port_mappings = [
+  {
+    containerPort = 8080
+    hostPort      = 80
+    protocol      = "tcp"
+  },
+  {
+    containerPort = 8081
+    hostPort      = 443
+    protocol      = "udp"
+  }
+]
+
+log_configuration = {
+  logDriver = "json-file"
+  options = {
+    "max-size" = "10m"
+    "max-file" = "3"
+  }
+  secretOptions = null
+}
+
+privileged = false
+
+extra_hosts = [{
+  ipAddress = "127.0.0.1"
+  hostname  = "app.local"
+  },
+]
+
+hostname        = "hostname"
+pseudo_terminal = true
+interactive     = true
+
+```
+
 
 For module composition, It's recommended to take a look at the module's `outputs` to understand what's available:
 ```hcl

@@ -6,7 +6,8 @@ resource "aws_ecs_task_definition" "this" {
   cpu                      = each.value["cpu"]
   memory                   = each.value["memory"]
   network_mode             = each.value["network_mode"]
-  task_role_arn            = each.value["is_default_task_role_to_be_created"] ? join("", [for r in aws_iam_role.this : r.arn]) : each.value["task_role_task_role_arn"]
+  execution_role_arn       = each.value["is_execution_role_to_be_created"] ? join("", aws_iam_role.ecs_execution_role[each.key].arn) : each.value["execution_role_arn"]
+  #  task_role_arn      = length(var.task_role_arn) > 0 ? var.task_role_arn : join("", aws_iam_role.ecs_task.*.arn)
 
   tags = var.tags
 }
