@@ -67,5 +67,3 @@ output "ecs_task_definition_proxy_configuration" {
   value       = [for t in aws_ecs_task_definition.this : t.proxy_configuration]
   description = "The proxy configuration of the task definition."
 }
-
-

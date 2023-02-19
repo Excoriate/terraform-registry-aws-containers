@@ -56,18 +56,21 @@ data "aws_iam_policy_document" "ecs_task_iam_policy_default_doc" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_task_iam_policy_default_doc" {
+resource "aws_iam_role_policy_attachment" "ecs_task_iam_policy_attachment_default" {
   for_each   = { for k, v in local.task_config_to_create : k => v if v["is_default_permissions_enabled"] }
   policy_arn = aws_iam_policy.ecs_task_iam_policy_default[each.key].arn
   role       = aws_iam_role.this[each.key].name
 }
 
-/*
-  * This logic is enabled whenever the 'root' module is passing extra IAM policy ARNs that should be attached to the IAM task role.
-*/
+module "iam_policy_attacher" {
+  count      = local.is_extra_iam_policies_enabled ? 1 : 0
+  source     = "git::github.com/excoriate/terraform-registry-aws-accounts-creator//modules/iam-policy-attacher"
+  aws_region = var.aws_region
+  is_enabled = local.is_extra_iam_policies_enabled
 
-resource "aws_iam_role_policy_attachment" "ecs_task_iam_policy_default_doc" {
-  for_each   = { for k, v in local.task_config_to_create : k => v if v["is_extra_iam_policy_arns_enabled"] }
-  policy_arn = each.value["extra_iam_policy_arns"]
-  role       = aws_iam_role.this[each.key].name
+  config = [for attachment in local.extra_iam_policies : {
+    name       = attachment["task_name"]
+    role       = attachment["role_name"] == "USER-DEFAULT" ? aws_iam_role.this[attachment["task_name"]].name : attachment["role_name"]
+    policy_arn = attachment["policy_arn"]
+  }]
 }

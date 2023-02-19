@@ -63,5 +63,3 @@ output "ecs_task_definition_proxy_configuration" {
   value       = module.main_module.ecs_task_definition_proxy_configuration
   description = "The proxy configuration of the task definition."
 }
-
-

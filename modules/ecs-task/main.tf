@@ -16,4 +16,20 @@ resource "aws_ecs_task_definition" "this" {
       error_message = "Both the container_definition_from_file and container_definition_from_json are empty or aren't set. Please provide at least one of them."
     }
   }
+
+  dynamic "proxy_configuration" {
+    for_each = each.value["proxy_configuration"]
+    content {
+      type           = proxy_configuration.value["type"]
+      container_name = proxy_configuration.value["container_name"]
+      properties     = proxy_configuration.value["properties"]
+    }
+  }
+
+  dynamic "ephemeral_storage" {
+    for_each = each.value["ephemeral_storage"]
+    content {
+      size_in_gib = ephemeral_storage.value["size_in_gib"]
+    }
+  }
 }

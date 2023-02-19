@@ -50,6 +50,8 @@ The documentation is **automatically generated** by [terraform-docs](https://ter
 | `aws-ecs-cluster`              | Stable ✅ | Create an ECS Cluster.                                                                                                                |
 | `aws-app-autoscaling`          | Stable ✅ | Auto-scaling module, for different services. Currently it's supported `ECS`.                                                          |
 | `aws-ecs-container-definition` | Stable ✅ | Helper module that enables the creation of a valid JSON that can be used as the container definition data of an ECS Task definition.. |
+| `aws-ecs-task`                 | Stable ✅ | Implement a Task definition to run workloads in Elastic Container Services.                                                           |
+| `aws-ecs-service`              | Stable ✅ | Implement an Elastic Container Service.                                                                                               |
 
 
 
