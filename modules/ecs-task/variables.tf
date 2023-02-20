@@ -30,7 +30,7 @@ variable "task_config" {
     container_definition_from_json = optional(string, null)
     container_definition_from_file = optional(string, null)
     type                           = optional(string, "FARGATE")
-    network_mode                   = optional(string, "awsvpc")
+    network_mode                   = optional(string, null)
     // Capacity
     cpu    = optional(number, 256)
     memory = optional(number, 512)

@@ -3,22 +3,21 @@ formatter: markdown table
 
 header-from: main.tf
 content: |-
-    # ☁️ ECS Task definition module.
+    # ☁️ ECS Service
     ## Description
     {{ .Header }}
-    This module creates an ECS task definition with the specified name.
-    * 🚀 **ECS task definition**: ECS task definition with the specified name.
-    * 🚀 **ECS task definition revision**: ECS task definition revision with the specified name.
+    This module creates an ECS service, which works with the specified task definition. The current and supported capabilities are:
+    - Create a service with a single task definition
+    - Create a service with a single task definition and a single load balancer
 
-    This module pretends to be used as a safer way to create ECS task definitions, by using the `terraform` way to create them, and parsing the resulting object as a valid .json
-  that can be used in an ECS service.
+    For more information about this specific resource, please visit its official documentation: [aws_ecs_service](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service)
 
     ---
     ## Example
     Examples of this module's usage are available in the [examples](./examples) folder.
 
     ```hcl
-    {{ include "../../examples/ecs-task-definition/basic/main.tf" }}
+    {{ include "../../examples/ecs-task-service/basic/main.tf" }}
     ```
 
     For module composition, It's recommended to take a look at the module's `outputs` to understand what's available:

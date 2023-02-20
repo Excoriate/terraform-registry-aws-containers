@@ -16,7 +16,7 @@ locals {
       container_definition_from_json = t["container_definition_from_json"] == null ? "" : t["container_definition_from_json"]
       container_definition_from_file = t["container_definition_from_file"] == null ? "" : t["container_definition_from_file"]
       requires_compatibilities       = [t["type"]] // It defaults to 'Fargate' if not set.
-      network_mode                   = t["network_mode"] == null ? "awsvpc" : t["network_mode"]
+      network_mode                   = t["network_mode"] == null ? null : t["network_mode"]
       cpu                            = t["cpu"] == null ? 256 : t["cpu"]
       memory                         = t["memory"] == null ? 512 : t["memory"]
       // Task role ARN
