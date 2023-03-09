@@ -7,20 +7,41 @@ content: |-
     ## Description
     {{ .Header }}
     This module is able to create IAM roles (either execution roles, or task roles) for ECS tasks, and attach the required policies to them.
-    * 🚀 Allow the generation of an execution role, to be attached to a task definition or to an ecs service.
-    * 🚀 Allow the generation of a task role, to be attached to a task definition.
-    * 🚀 Allow the generation of a task role, to be attached to a task definition, and attach the required policies to it.
-
-    This module pretends to be used as a safer way to create ECS task definitions, by using the `terraform` way to create them, and parsing the resulting object as a valid .json
-    that can be used in an ECS service.
+    * 🚀 Create ecs execution roles, with out-of-the-box policies attached.
+    * 🚀 Create ecs task roles, with out-of-the-box policies attached.
+    * 🚀 Create custom ecs execution roles with custom policies attached.
+    * 🚀 Create custom ecs task roles with custom policies attached.
 
     ---
     ## Example
     Examples of this module's usage are available in the [examples](./examples) folder.
 
     ```hcl
-    {{ include "../../examples/ecs-task-definition/basic/main.tf" }}
+    {{ include "../../examples/ecs-roles/basic/main.tf" }}
     ```
+
+    Several examples that implement this module in different scenarios:
+    ```hcl
+    {{ include "../../examples/ecs-roles/basic/config/fixtures.tfvars" }}
+    ```
+
+    ```hcl
+    {{ include "../../examples/ecs-roles/basic/config/fixtures-execution-role-custom-multiples.tfvars" }}
+    ```
+
+    ```hcl
+    {{ include "../../examples/ecs-roles/basic/config/fixtures-task-role-custom-multiples.tfvars" }}
+    ```
+
+    ```hcl
+    {{ include "../../examples/ecs-roles/basic/config/fixtures-task-role-ooo-fargate.tfvars" }}
+    ```
+
+
+    ```hcl
+    {{ include "../../examples/ecs-roles/basic/config/fixtures-execution-role-fargate.tfvars" }}
+    ```
+
 
     For module composition, It's recommended to take a look at the module's `outputs` to understand what's available:
     ```hcl

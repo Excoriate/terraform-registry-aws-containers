@@ -1,13 +1,12 @@
 <!-- BEGIN_TF_DOCS -->
-# ☁️ Auto-scaling module for ECS (services)
+# ☁️ ECS Role generator
 ## Description
-
-This module enables an auto-scaling strategy for an application or service that's intended to run on ECS (service).
-* 🚀 **ECS service auto-scaling**: ECS service auto-scaling with the specified name.
-* 🚀 **ECS service auto-scaling policy**: ECS service auto-scaling policy with the specified name.
-* 🚀 **ECS service auto-scaling target**: ECS service auto-scaling target with the specified name.
-
-Currently, this module doesnt' support other services, only `ECS service` for now. Future services will be added soon.
+Execution role
+This module is able to create IAM roles (either execution roles, or task roles) for ECS tasks, and attach the required policies to them.
+* 🚀 Create ecs execution roles, with out-of-the-box policies attached.
+* 🚀 Create ecs task roles, with out-of-the-box policies attached.
+* 🚀 Create custom ecs execution roles with custom policies attached.
+* 🚀 Create custom ecs task roles with custom policies attached.
 
 ---
 ## Example
@@ -15,34 +14,28 @@ Examples of this module's usage are available in the [examples](./examples) fold
 
 ```hcl
 module "main_module" {
-  source     = "../../../../modules/auto-scaling/app-auto-scaling"
+  source     = "../../../modules/ecs-roles"
   is_enabled = var.is_enabled
   aws_region = var.aws_region
 
-  auto_scaling_config     = var.auto_scaling_config
-  auto_scaling_ecs_config = var.auto_scaling_ecs_config
+  execution_role_ooo_config         = var.execution_role_ooo_config
+  execution_role_config             = var.execution_role_config
+  execution_role_permissions_config = var.execution_role_permissions_config
+  task_role_ooo_config              = var.task_role_ooo_config
+  task_role_config                  = var.task_role_config
+  task_role_permissions_config      = var.task_role_permissions_config
 }
 ```
+
+Several examples that implement this module in different scenarios:
 ```hcl
 aws_region = "us-east-1"
 is_enabled = true
 
-auto_scaling_config = [
+execution_role_ooo_config = [
   {
-    name         = "auto-scaling-identifier"
-    dimension    = "DesireCount"
-    resource_id  = "mycluster/my-service"
-    min_capacity = 1
-    max_capacity = 10
-    type         = "ecs"
-  },
-  {
-    name         = "auto-scaling-another"
-    dimension    = "DesireCount"
-    resource_id  = "mycluster/my-service"
-    min_capacity = 2
-    max_capacity = 10
-    type         = "ecs"
+    name                   = "test"
+    enable_ooo_role_common = true
   }
 ]
 ```
@@ -51,36 +44,88 @@ auto_scaling_config = [
 aws_region = "us-east-1"
 is_enabled = true
 
-auto_scaling_config = [
+execution_role_config = [
   {
-    name         = "auto-scaling-identifier"
-    dimension    = "DesireCount"
-    resource_id  = "mycluster/my-service"
-    min_capacity = 1
-    max_capacity = 10
-    type         = "ecs"
-  },
-  {
-    name         = "auto-scaling-another"
-    dimension    = "DesireCount"
-    resource_id  = "mycluster/my-service"
-    min_capacity = 2
-    max_capacity = 10
-    type         = "ecs"
+    name = "test"
   }
 ]
 
-auto_scaling_ecs_config= [
+execution_role_permissions_config = [
   {
-    // All the other are optionals, so it'll inherit the default values.
-    name = "auto-scaling-identifier"
+    resources                      = ["*"]
+    policy_name                    = "pol1"
+    role_name                      = "test"
+    merge_with_default_permissions = true
+    actions                        = ["*"]
+    type                           = "Deny"
   },
   {
-    name                = "auto-scaling-another"
-    target_metric_value = 20
+    resources                      = ["*"]
+    policy_name                    = "pol2"
+    role_name                      = "test"
+    merge_with_default_permissions = false
+    actions                        = ["ec2:Describe*", "ec2:CreateTags"]
+    type                           = "Allow"
   }
 ]
 ```
+
+```hcl
+aws_region = "us-east-1"
+is_enabled = true
+
+task_role_config = [
+  {
+    name = "test"
+  }
+]
+
+task_role_permissions_config = [
+  {
+    resources                      = ["*"]
+    policy_name                    = "pol1"
+    role_name                      = "test"
+    merge_with_default_permissions = true
+    actions                        = ["*"]
+    type                           = "Deny"
+  },
+  {
+    resources                      = ["*"]
+    policy_name                    = "pol2"
+    role_name                      = "test"
+    merge_with_default_permissions = false
+    actions                        = ["ec2:Describe*", "ec2:CreateTags"]
+    type                           = "Allow"
+  }
+]
+```
+
+```hcl
+aws_region = "us-east-1"
+is_enabled = true
+
+task_role_ooo_config = [
+  {
+    name = "test"
+    enable_ooo_role_common  = false
+    enable_ooo_role_fargate = true
+  }
+]
+```
+
+
+```hcl
+aws_region = "us-east-1"
+is_enabled = true
+
+execution_role_ooo_config = [
+  {
+    name                    = "test"
+    enable_ooo_role_fargate = true
+  }
+]
+```
+
 
 For module composition, It's recommended to take a look at the module's `outputs` to understand what's available:
 ```hcl
@@ -104,34 +149,29 @@ output "tags_set" {
 Custom outputs
 -------------------------------------
 */
-output "aws_region_for_deploy" {
-  value       = local.aws_region_to_deploy
-  description = "The AWS region where the module is deployed."
+output "execution_role_ooo_id" {
+  value       = [for role in aws_iam_role.execution_role_ooo : role.id]
+  description = "The ID of the OOO execution role (common)."
 }
 
-output "app_autoscaling_ecs_id" {
-  value       = [for ac in aws_appautoscaling_target.ecs_target : ac.id]
-  description = "The ID of the application autoscaling target for ECS."
+output "execution_role_ooo_arn" {
+  value       = [for role in aws_iam_role.execution_role_ooo : role.arn]
+  description = "The ARN of the OOO execution role (common)."
 }
 
-output "app_autoscaling_ecs_role_arn" {
-  value       = [for ac in aws_appautoscaling_target.ecs_target : ac.role_arn]
-  description = "The ARN of the application autoscaling target for ECS."
+output "execution_role_ooo_name" {
+  value       = [for role in aws_iam_role.execution_role_ooo : role.name]
+  description = "The name of the OOO execution role (common)."
 }
 
-output "app_autoscaling_ecs_min_capacity" {
-  value       = [for ac in aws_appautoscaling_target.ecs_target : ac.min_capacity]
-  description = "The minimum capacity of the application autoscaling target for ECS."
+output "execution_role_ooo_unique_id" {
+  value       = [for role in aws_iam_role.execution_role_ooo : role.unique_id]
+  description = "The unique ID of the OOO execution role (common)."
 }
 
-output "app_autoscaling_ecs_max_capacity" {
-  value       = [for ac in aws_appautoscaling_target.ecs_target : ac.max_capacity]
-  description = "The maximum capacity of the application autoscaling target for ECS."
-}
-
-output "app_autoscaling_ecs_resource_id" {
-  value       = [for ac in aws_appautoscaling_target.ecs_target : ac.resource_id]
-  description = "The resource ID of the application autoscaling target for ECS."
+output "execution_role_ooo_assume_policy_doc" {
+  value       = [for role in aws_iam_role.execution_role_ooo : role.assume_role_policy]
+  description = "The IAM policy document of the OOO execution role (common)."
 }
 ```
 ---
@@ -142,20 +182,37 @@ output "app_autoscaling_ecs_resource_id" {
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 4.54.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 4.57.1 |
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_iam_policy_execution_role_custom"></a> [iam\_policy\_execution\_role\_custom](#module\_iam\_policy\_execution\_role\_custom) | git::github.com/Excoriate/terraform-registry-aws-accounts-creator//modules/iam-policy | v0.49.0 |
+| <a name="module_iam_policy_execution_role_custom_attachment"></a> [iam\_policy\_execution\_role\_custom\_attachment](#module\_iam\_policy\_execution\_role\_custom\_attachment) | git::github.com/Excoriate/terraform-registry-aws-accounts-creator//modules/iam-policy-attacher | v0.49.0 |
+| <a name="module_iam_policy_execution_role_ooo_common"></a> [iam\_policy\_execution\_role\_ooo\_common](#module\_iam\_policy\_execution\_role\_ooo\_common) | git::github.com/Excoriate/terraform-registry-aws-accounts-creator//modules/iam-policy | v0.49.0 |
+| <a name="module_iam_policy_execution_role_ooo_common_attachment"></a> [iam\_policy\_execution\_role\_ooo\_common\_attachment](#module\_iam\_policy\_execution\_role\_ooo\_common\_attachment) | git::github.com/Excoriate/terraform-registry-aws-accounts-creator//modules/iam-policy-attacher | v0.49.0 |
+| <a name="module_iam_policy_execution_role_ooo_fargate"></a> [iam\_policy\_execution\_role\_ooo\_fargate](#module\_iam\_policy\_execution\_role\_ooo\_fargate) | git::github.com/Excoriate/terraform-registry-aws-accounts-creator//modules/iam-policy | v0.49.0 |
+| <a name="module_iam_policy_execution_role_ooo_fargate_attachment"></a> [iam\_policy\_execution\_role\_ooo\_fargate\_attachment](#module\_iam\_policy\_execution\_role\_ooo\_fargate\_attachment) | git::github.com/Excoriate/terraform-registry-aws-accounts-creator//modules/iam-policy-attacher | v0.49.0 |
+| <a name="module_iam_policy_task_role_custom"></a> [iam\_policy\_task\_role\_custom](#module\_iam\_policy\_task\_role\_custom) | git::github.com/Excoriate/terraform-registry-aws-accounts-creator//modules/iam-policy | v0.49.0 |
+| <a name="module_iam_policy_task_role_custom_attachment"></a> [iam\_policy\_task\_role\_custom\_attachment](#module\_iam\_policy\_task\_role\_custom\_attachment) | git::github.com/Excoriate/terraform-registry-aws-accounts-creator//modules/iam-policy-attacher | v0.49.0 |
+| <a name="module_iam_policy_task_role_ooo_common"></a> [iam\_policy\_task\_role\_ooo\_common](#module\_iam\_policy\_task\_role\_ooo\_common) | git::github.com/Excoriate/terraform-registry-aws-accounts-creator//modules/iam-policy | v0.49.0 |
+| <a name="module_iam_policy_task_role_ooo_common_attachment"></a> [iam\_policy\_task\_role\_ooo\_common\_attachment](#module\_iam\_policy\_task\_role\_ooo\_common\_attachment) | git::github.com/Excoriate/terraform-registry-aws-accounts-creator//modules/iam-policy-attacher | v0.49.0 |
+| <a name="module_iam_policy_task_role_ooo_fargate"></a> [iam\_policy\_task\_role\_ooo\_fargate](#module\_iam\_policy\_task\_role\_ooo\_fargate) | git::github.com/Excoriate/terraform-registry-aws-accounts-creator//modules/iam-policy | v0.49.0 |
+| <a name="module_iam_policy_task_role_ooo_fargate_attachment"></a> [iam\_policy\_task\_role\_ooo\_fargate\_attachment](#module\_iam\_policy\_task\_role\_ooo\_fargate\_attachment) | git::github.com/Excoriate/terraform-registry-aws-accounts-creator//modules/iam-policy-attacher | v0.49.0 |
 
 ## Resources
 
 | Name | Type |
 |------|------|
-| [aws_appautoscaling_policy.ecs_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
-| [aws_appautoscaling_policy.ecs_scale_down](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
-| [aws_appautoscaling_policy.ecs_scale_up](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
-| [aws_appautoscaling_target.ecs_target](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_target) | resource |
+| [aws_iam_role.execution_role_custom](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role.execution_role_ooo](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role.task_role_custom](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role.task_role_ooo](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_policy_document.execution_role_custom_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.execution_role_ooo_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.task_role_custom_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.task_role_ooo_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 ## Requirements
 
@@ -169,23 +226,26 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_auto_scaling_config"></a> [auto\_scaling\_config](#input\_auto\_scaling\_config) | A configuration object, that defines an auto-scaling configuration for an application in AWS. This object doesn't<br>define the auto-scaling specifics configuration. For such configurations, please refer to the input variable<br>'var.auto\_scaling\_ecs\_config' or the one that corresponds to the specific AWS application (DynamoDB, Aurora, ECS, etc.)<br>The current attributes that are supported are:<br>- name: Unique identifier for this auto-scaling configuration.<br>- type: The type of the auto-scaling configuration. E.g.: ecs, dynamodb, aurora.<br>- resource\_id: Unique identifier for this auto-scaling configuration.<br>- dimension: The dimension of the auto-scaling configuration.<br>- min\_capacity: The minimum capacity of the auto-scaling configuration.<br>- max\_capacity: The maximum capacity of the auto-scaling configuration.<br>- role\_arn: The ARN of the IAM role that allows Application Auto Scaling to modify your scalable target on your behalf. | <pre>list(object({<br>    name         = string<br>    type         = string<br>    resource_id  = string<br>    dimension    = string<br>    min_capacity = optional(number, 1)<br>    max_capacity = optional(number, 1)<br>    role_arn     = optional(string, null)<br>  }))</pre> | `null` | no |
-| <a name="input_auto_scaling_ecs_config"></a> [auto\_scaling\_ecs\_config](#input\_auto\_scaling\_ecs\_config) | A configuration object, that defines an auto-scaling configuration for an application in AWS. This<br>  configuration is used to configure the auto-scaling for an application in AWS.<br>Current attributes supported:<br>- name: Unique identifier for this auto-scaling configuration.<br>- adjustment\_type: The adjustment type, which specifies how ScalingAdjustment is interpreted. Valid values are ChangeInCapacity, ExactCapacity, and PercentChangeInCapacity.<br>- metric\_aggregation\_type: The aggregation type for the CloudWatch metrics. Valid values are Minimum, Maximum, and Average.<br>- scale\_up\_cool\_down: The amount of time, in seconds, after a scale in activity completes before another scale in activity can start.<br>- scale\_down\_cool\_down: The amount of time, in seconds, after a scale out activity completes before another scale out activity can start.<br>- scale\_up\_adjustment: The amount by which to scale, based on the specified adjustment type. A positive value adds to the current capacity while a negative number removes from the current capacity.<br>- scale\_down\_adjustment: The amount by which to scale, based on the specified adjustment type. A positive value adds to the current capacity while a negative number removes from the current capacity.<br>- target\_metric\_type: The metric type. The only valid value is ECSServiceAverageCPUUtilization.<br>- target\_metric\_value: The target value for the metric. | <pre>list(object({<br>    name                    = string<br>    adjustment_type         = optional(string, "ChangeInCapacity")<br>    metric_aggregation_type = optional(string, "Average")<br>    scale_up_cool_down      = optional(number, 60)<br>    scale_down_cool_down    = optional(number, 60)<br>    scale_up_adjustment     = optional(number, 1)<br>    scale_down_adjustment   = optional(number, -1)<br>    target_metric_type      = optional(string, "ECSServiceAverageCPUUtilization")<br>    target_metric_value     = optional(number, 50)<br>  }))</pre> | `null` | no |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | AWS region to deploy the resources | `string` | n/a | yes |
+| <a name="input_execution_role_config"></a> [execution\_role\_config](#input\_execution\_role\_config) | A list of objects that contains the settings for the custom execution role, compatible<br>with ECS (Task or ECS service).<br>The current attributes that are supported are:<br>- name: The unique identifier of this resource.<br>- role\_name: The name of the role. If it's not passed, it'll take the name passed<br>  in the "name" attribute.<br>- permissions\_boundary: The ARN of the policy that is used to set the permissions | <pre>list(object({<br>    name                 = string<br>    role_name            = optional(string, null)<br>    permissions_boundary = optional(string, null)<br>  }))</pre> | `null` | no |
+| <a name="input_execution_role_ooo_config"></a> [execution\_role\_ooo\_config](#input\_execution\_role\_ooo\_config) | A list of objects that contains the settings for the Out-of-the-box execution role, compatible<br>with ECS (Task or ECS service).<br>The current attributes that are supported are:<br>- name: The unique identifier of this resource.<br>- role\_name: The name of the role. If it's not passed, it'll take the name passed<br>  in the "name" attribute.<br>- permissions\_boundary: The ARN of the policy that is used to set the permissions<br>- enable\_ooo\_role\_common: Whether to enable the Out-of-the-box role for ECS<br>  (Task or ECS service) with common permissions.<br>- enable\_ooo\_role\_fargate: Whether to enable the Out-of-the-box role for ECS<br>  (Task or ECS service) with Fargate permissions. | <pre>list(object({<br>    // General settings<br>    name                    = string<br>    role_name               = optional(string, null)<br>    permissions_boundary    = optional(string, null)<br>    enable_ooo_role_common  = optional(bool, false)<br>    enable_ooo_role_fargate = optional(bool, false)<br>  }))</pre> | `null` | no |
+| <a name="input_execution_role_permissions_config"></a> [execution\_role\_permissions\_config](#input\_execution\_role\_permissions\_config) | A list of objects that contains the settings for the permissions that will be attached<br>to the execution role, compatible with ECS (Task or ECS service).<br>The current attributes that are supported are:<br>- role\_name: The name of the role. If it's not passed, it'll take the name passed<br>  in the "name" attribute.<br>- resources: The ARN of the resource that will be attached to the role.<br>- policy\_name: The name of the policy that will be attached to the role. It's required for uniqueness of the underlying module.<br>- permissions: A list of strings that contains the permissions that will be<br>  attached to the role.<br>- actions: The action that will be performed with the permissions. The default<br>- merge\_with\_default\_permissions: Whether to merge the permissions passed in<br>  this attribute with the default permissions. The default value is false.<br>- type: The type of the permission. The default value is "allow". | <pre>list(object({<br>    role_name                      = string<br>    policy_name                    = string<br>    resources                      = optional(list(string), ["*"])<br>    merge_with_default_permissions = optional(bool, false)<br>    actions                        = optional(list(string), ["*"])<br>    type                           = optional(string, "allow")<br>  }))</pre> | `null` | no |
 | <a name="input_is_enabled"></a> [is\_enabled](#input\_is\_enabled) | Whether this module will be created or not. It is useful, for stack-composite<br>modules that conditionally includes resources provided by this module.. | `bool` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all resources. | `map(string)` | `{}` | no |
+| <a name="input_task_role_config"></a> [task\_role\_config](#input\_task\_role\_config) | A list of objects that contains the settings for the Out-of-the-box task role, compatible<br>with ECS to be used as a task role (task\_role\_arn if it's used in a task definition)<br>The current attributes that are supported are:<br>- name: The unique identifier of this resource.<br>- role\_name: The name of the role. If it's not passed, it'll take the name passed<br>  in the "name" attribute.<br>- permissions\_boundary: The ARN of the policy that is used to set the permissions | <pre>list(object({<br>    name                 = string<br>    role_name            = optional(string, null)<br>    permissions_boundary = optional(string, null)<br>  }))</pre> | `null` | no |
+| <a name="input_task_role_ooo_config"></a> [task\_role\_ooo\_config](#input\_task\_role\_ooo\_config) | A list of objects that contains the settings for the Out-of-the-box task role, compatible<br>with ECS to be used as a task role (task\_role\_arn if it's used in a task definition)<br>The current attributes that are supported are:<br>- name: The unique identifier of this resource.<br>- role\_name: The name of the role. If it's not passed, it'll take the name passed<br>  in the "name" attribute.<br>- permissions\_boundary: The ARN of the policy that is used to set the permissions<br>- enable\_ooo\_role\_common: Whether to enable the Out-of-the-box role for ECS<br>  (Task or ECS service) with common permissions.<br>- enable\_ooo\_role\_fargate: Whether to enable the Out-of-the-box role for ECS<br>  (Task or ECS service) with Fargate permissions. | <pre>list(object({<br>    name                    = string<br>    role_name               = optional(string, null)<br>    permissions_boundary    = optional(string, null)<br>    enable_ooo_role_common  = optional(bool, false)<br>    enable_ooo_role_fargate = optional(bool, false)<br>  }))</pre> | `null` | no |
+| <a name="input_task_role_permissions_config"></a> [task\_role\_permissions\_config](#input\_task\_role\_permissions\_config) | A list of objects that contains the settings for the permissions that will be attached<br>to the task role, compatible with ECS (Task or ECS service).<br>The current attributes that are supported are:<br>- role\_name: The name of the role. If it's not passed, it'll take the name passed<br>  in the "name" attribute.<br>- resources: The ARN of the resource that will be attached to the role.<br>- policy\_name: The name of the policy that will be attached to the role. It's required for uniqueness of the underlying module.<br>- permissions: A list of strings that contains the permissions that will be<br>  attached to the role.<br>- actions: The action that will be performed with the permissions. The default<br>- merge\_with\_default\_permissions: Whether to merge the permissions passed in<br>  this attribute with the default permissions. The default value is false.<br>- type: The type of the permission. The default value is "allow". | <pre>list(object({<br>    role_name                      = string<br>    policy_name                    = string<br>    resources                      = optional(list(string), ["*"])<br>    merge_with_default_permissions = optional(bool, false)<br>    actions                        = optional(list(string), ["*"])<br>    type                           = optional(string, "allow")<br>  }))</pre> | `null` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_app_autoscaling_ecs_id"></a> [app\_autoscaling\_ecs\_id](#output\_app\_autoscaling\_ecs\_id) | The ID of the application autoscaling target for ECS. |
-| <a name="output_app_autoscaling_ecs_max_capacity"></a> [app\_autoscaling\_ecs\_max\_capacity](#output\_app\_autoscaling\_ecs\_max\_capacity) | The maximum capacity of the application autoscaling target for ECS. |
-| <a name="output_app_autoscaling_ecs_min_capacity"></a> [app\_autoscaling\_ecs\_min\_capacity](#output\_app\_autoscaling\_ecs\_min\_capacity) | The minimum capacity of the application autoscaling target for ECS. |
-| <a name="output_app_autoscaling_ecs_resource_id"></a> [app\_autoscaling\_ecs\_resource\_id](#output\_app\_autoscaling\_ecs\_resource\_id) | The resource ID of the application autoscaling target for ECS. |
-| <a name="output_app_autoscaling_ecs_role_arn"></a> [app\_autoscaling\_ecs\_role\_arn](#output\_app\_autoscaling\_ecs\_role\_arn) | The ARN of the application autoscaling target for ECS. |
-| <a name="output_aws_region_for_deploy"></a> [aws\_region\_for\_deploy](#output\_aws\_region\_for\_deploy) | The AWS region where the module is deployed. |
 | <a name="output_aws_region_for_deploy_this"></a> [aws\_region\_for\_deploy\_this](#output\_aws\_region\_for\_deploy\_this) | The AWS region where the module is deployed. |
+| <a name="output_execution_role_ooo_arn"></a> [execution\_role\_ooo\_arn](#output\_execution\_role\_ooo\_arn) | The ARN of the OOO execution role (common). |
+| <a name="output_execution_role_ooo_assume_policy_doc"></a> [execution\_role\_ooo\_assume\_policy\_doc](#output\_execution\_role\_ooo\_assume\_policy\_doc) | The IAM policy document of the OOO execution role (common). |
+| <a name="output_execution_role_ooo_id"></a> [execution\_role\_ooo\_id](#output\_execution\_role\_ooo\_id) | The ID of the OOO execution role (common). |
+| <a name="output_execution_role_ooo_name"></a> [execution\_role\_ooo\_name](#output\_execution\_role\_ooo\_name) | The name of the OOO execution role (common). |
+| <a name="output_execution_role_ooo_unique_id"></a> [execution\_role\_ooo\_unique\_id](#output\_execution\_role\_ooo\_unique\_id) | The unique ID of the OOO execution role (common). |
 | <a name="output_is_enabled"></a> [is\_enabled](#output\_is\_enabled) | Whether the module is enabled or not. |
 | <a name="output_tags_set"></a> [tags\_set](#output\_tags\_set) | The tags set for the module. |
 <!-- END_TF_DOCS -->
