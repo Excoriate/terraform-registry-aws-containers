@@ -1,0 +1,54 @@
+---
+formatter: markdown table
+
+header-from: main.tf
+content: |-
+    # ☁️ ECS Role generator
+    ## Description
+    {{ .Header }}
+    This module is able to create IAM roles (either execution roles, or task roles) for ECS tasks, and attach the required policies to them.
+    * 🚀 Allow the generation of an execution role, to be attached to a task definition or to an ecs service.
+    * 🚀 Allow the generation of a task role, to be attached to a task definition.
+    * 🚀 Allow the generation of a task role, to be attached to a task definition, and attach the required policies to it.
+
+    This module pretends to be used as a safer way to create ECS task definitions, by using the `terraform` way to create them, and parsing the resulting object as a valid .json
+    that can be used in an ECS service.
+
+    ---
+    ## Example
+    Examples of this module's usage are available in the [examples](./examples) folder.
+
+    ```hcl
+    {{ include "../../examples/ecs-task-definition/basic/main.tf" }}
+    ```
+
+    For module composition, It's recommended to take a look at the module's `outputs` to understand what's available:
+    ```hcl
+    {{ include "outputs.tf" }}
+    ```
+    ---
+
+    ## Module's documentation
+    (This documentation is auto-generated using [terraform-docs](https://terraform-docs.io))
+    {{ .Providers }}
+
+    {{ .Modules }}
+
+    {{ .Resources }}
+
+    {{ .Requirements }}
+
+    {{ .Inputs }}
+
+    {{ .Outputs }}
+
+output:
+    file: README.md
+    mode: inject
+    template: |-
+        <!-- BEGIN_TF_DOCS -->
+        {{ .Content }}
+        <!-- END_TF_DOCS -->
+settings:
+    anchor: true
+    color: true

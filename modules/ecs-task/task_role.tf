@@ -52,6 +52,14 @@ data "aws_iam_policy_document" "ecs_task_iam_policy_default_doc" {
       "secretsmanager:GetSecretValue",
       "secretsmanager:DescribeSecret",
       "kms:Decrypt",
+      "dynamodb:GetItem",
+      "dynamodb:Query",
+      "dynamodb:Scan",
+      "dynamodb:BatchGetItem",
+      "dynamodb:BatchWriteItem",
+      "dynamodb:DescribeTable",
+      "dynamodb:ListTables",
+      "dynamodb:DescribeTimeToLive"
     ]
   }
 }
