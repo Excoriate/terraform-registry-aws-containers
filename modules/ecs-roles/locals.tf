@@ -51,7 +51,7 @@ locals {
         name        = trimspace(lower(p.policy_name))
         description = format("Custom Policy for %s", trimspace(lower(p.policy_name)))
         statements = [{
-          sid       = replace(trimspace(format("sidpol%s", trimspace(lower(p.policy_name)))), "[-_ ]", "")
+          sid       = replace(replace(format("sidpol%s", trimspace(lower(p.policy_name))), "-", ""), "_", "")
           effect    = p["type"] == null ? "Deny" : p["type"],
           actions   = p["merge_with_default_permissions"] == false ? p["actions"] : concat(p["actions"], local.iam_policy_execution_role_custom_policy_default_allow["statements"][0]["actions"])
           resources = p["resources"] == null ? ["*"] : p["resources"]
@@ -100,7 +100,7 @@ locals {
         name        = trimspace(lower(p.policy_name))
         description = format("Custom Policy for %s", trimspace(lower(p.policy_name)))
         statements = [{
-          sid       = replace(trimspace(format("sidpol%s", trimspace(lower(p.policy_name)))), "[-_ ]", "")
+          sid       = replace(replace(format("sidpol%s", trimspace(lower(p.policy_name))), "-", ""), "_", "")
           effect    = p["type"] == null ? "Deny" : p["type"],
           actions   = p["merge_with_default_permissions"] == false ? p["actions"] : concat(p["actions"], local.iam_policy_task_role_custom_policy_default_allow["statements"][0]["actions"])
           resources = p["resources"] == null ? ["*"] : p["resources"]
