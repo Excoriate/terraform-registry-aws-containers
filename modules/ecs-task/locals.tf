@@ -21,11 +21,11 @@ locals {
       memory                         = t["memory"] == null ? 512 : t["memory"]
       // Task role ARN
       task_role_arn        = t["task_role_arn"] == null ? null : trimspace(t["task_role_arn"])
+      execution_role_arn   = t["execution_role_arn"] == null ? null : trimspace(t["execution_role_arn"])
       permissions_boundary = t["permissions_boundary"] == null ? null : trimspace(t["permissions_boundary"])
 
       // feature flags
       is_default_task_role_to_be_created        = t["task_role_arn"] == null
-      is_default_permissions_enabled            = t["enable_default_permissions"]
       is_container_definition_from_file_enabled = t["container_definition_from_file"] != null && t["container_definition_from_json"] == null
 
       proxy_configuration = t["proxy_configuration"] == null ? {} : {
@@ -46,27 +46,7 @@ locals {
   ]
 
   task_config_to_create = !local.is_enabled ? {} : {
-    for t in local.task_config_normalized : t["name"] => {
-      name                           = t["name"]
-      family                         = t["family"]
-      container_definition_from_json = t["container_definition_from_json"]
-      container_definition_from_file = t["container_definition_from_file"]
-      requires_compatibilities       = t["requires_compatibilities"]
-      network_mode                   = t["network_mode"]
-      cpu                            = t["cpu"]
-      memory                         = t["memory"]
-      // Permissions.
-      task_role_arn        = t["task_role_arn"]
-      permissions_boundary = t["permissions_boundary"]
-
-      // Feature flags.
-      is_default_task_role_to_be_created        = t["is_default_task_role_to_be_created"]
-      is_container_definition_from_file_enabled = t["is_container_definition_from_file_enabled"]
-      is_default_permissions_enabled            = t["is_default_permissions_enabled"]
-
-      proxy_configuration = t["proxy_configuration"]
-      ephemeral_storage   = t["ephemeral_storage"]
-    }
+    for t in local.task_config_normalized : t["name"] => t
   }
 
   /*
@@ -80,12 +60,4 @@ locals {
       role_name  = p["role_name"] == null ? "USER-DEFAULT" : trimspace(p["role_name"])
     }
   ]
-
-  #  extra_iam_policies_to_create = !local.is_extra_iam_policies_enabled ? {} : {
-  #    for p in local.extra_iam_policies : p["task_name"] => {
-  #      task_name        = p["task_name"]
-  #      policy_arn = p["policy_arn"]
-  #      role_name = p["role_name"]
-  #    }
-  #  }
 }

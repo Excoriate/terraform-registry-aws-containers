@@ -35,9 +35,9 @@ variable "task_config" {
     cpu    = optional(number, 256)
     memory = optional(number, 512)
     // Permissions
-    task_role_arn              = optional(string, null) // If null, it'll create the IAM Role as part of this module.
-    enable_default_permissions = optional(bool, true)
-    permissions_boundary       = optional(string, null)
+    task_role_arn        = optional(string, null) // If null, it'll create the IAM Role as part of this module.
+    execution_role_arn   = optional(string, null) // If null, it'll create the IAM Role as part of this module.
+    permissions_boundary = optional(string, null)
     // proxy_configuration
     proxy_configuration = optional(object({
       type           = string
@@ -63,7 +63,7 @@ The currently supported attributes are:
 - cpu: The number of CPU units to reserve for the container. Default: 256.
 - memory: The amount of memory (in MiB) to allow the container to use. Default: 512.
 - task_role_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.
-- enable_default_permissions: Whether to enable the default permissions for the task role. Default: true.
+- execution_role_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.
 - permissions_boundary: The ARN of the policy that is used to set the permissions boundary for the task role.
   EOF
 }

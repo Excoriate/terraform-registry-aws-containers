@@ -1,13 +1,13 @@
 <!-- BEGIN_TF_DOCS -->
-# ☁️ Auto-scaling module for ECS (services)
+# ☁️ ECS Task definition module.
 ## Description
 
-This module enables an auto-scaling strategy for an application or service that's intended to run on ECS (service).
-* 🚀 **ECS service auto-scaling**: ECS service auto-scaling with the specified name.
-* 🚀 **ECS service auto-scaling policy**: ECS service auto-scaling policy with the specified name.
-* 🚀 **ECS service auto-scaling target**: ECS service auto-scaling target with the specified name.
+This module creates an ECS task definition with the specified name.
+* 🚀 **ECS task definition**: ECS task definition with the specified name.
+* 🚀 **ECS task definition revision**: ECS task definition revision with the specified name.
 
-Currently, this module doesnt' support other services, only `ECS service` for now. Future services will be added soon.
+This module pretends to be used as a safer way to create ECS task definitions, by using the `terraform` way to create them, and parsing the resulting object as a valid .json
+that can be used in an ECS service.
 
 ---
 ## Example
@@ -15,71 +15,173 @@ Examples of this module's usage are available in the [examples](./examples) fold
 
 ```hcl
 module "main_module" {
-  source     = "../../../../modules/auto-scaling/app-auto-scaling"
+  source     = "../../../modules/ecs-task"
   is_enabled = var.is_enabled
   aws_region = var.aws_region
 
-  auto_scaling_config     = var.auto_scaling_config
-  auto_scaling_ecs_config = var.auto_scaling_ecs_config
+  task_config = [
+    {
+      name = "task1"
+      container_definition_from_json = jsonencode([
+        {
+          name               = "app"
+          image              = "cloudposse/geodesic"
+          essential          = true
+          interactive        = true
+          pseudo_terminal    = true
+          cpu                = 256
+          memory             = 256
+          memory_reservation = 128
+          log_configuration = {
+            log_driver = "json-file"
+            options = {
+              "max-file" = "3"
+              "max-size" = "10m"
+            }
+          }
+          port_mappings = [
+            {
+              container_port = 8080
+              host_port      = 80
+              protocol       = "tcp"
+            },
+            {
+              container_port = 8081
+              host_port      = 443
+              protocol       = "udp"
+            },
+          ]
+          extra_hosts = [
+            {
+              hostname   = "app.local"
+              ip_address = "127.0.0.1"
+            },
+          ]
+          mount_points              = []
+          volumes_from              = []
+          privileged                = false
+          read_only_root_filesystem = false
+        }
+      ])
+    },
+    // Task 2
+    {
+      name = "task2"
+      container_definition_from_json = jsonencode([
+        {
+          name               = "app"
+          image              = "cloudposse/geodesic"
+          essential          = true
+          interactive        = true
+          pseudo_terminal    = false
+          cpu                = 256
+          memory             = 256
+          memory_reservation = 128
+          log_configuration = {
+            log_driver = "json-file"
+            options = {
+              "max-file" = "3"
+              "max-size" = "10m"
+            }
+          }
+          port_mappings = [
+            {
+              container_port = 8080
+              host_port      = 80
+              protocol       = "tcp"
+            },
+            {
+              container_port = 8081
+              host_port      = 443
+              protocol       = "udp"
+            },
+          ]
+          extra_hosts = [
+            {
+              hostname   = "app.local"
+              ip_address = "127.0.0.1"
+            },
+          ]
+          mount_points              = []
+          volumes_from              = []
+          privileged                = false
+          read_only_root_filesystem = false
+        }
+      ])
+    },
+    // Task 3 with extra IAM policies.
+    {
+      name = "task3"
+      enable_extra_iam_policies_arn = [
+      aws_iam_policy.test_extra_iam_policy.arn]
+      container_definition_from_json = jsonencode([
+        {
+          name               = "app"
+          image              = "cloudposse/geodesic"
+          essential          = true
+          interactive        = true
+          pseudo_terminal    = false
+          cpu                = 256
+          memory             = 256
+          memory_reservation = 128
+          log_configuration = {
+            log_driver = "json-file"
+            options = {
+              "max-file" = "3"
+              "max-size" = "10m"
+            }
+          }
+          port_mappings = [
+            {
+              container_port = 8080
+              host_port      = 80
+              protocol       = "tcp"
+            },
+            {
+              container_port = 8081
+              host_port      = 443
+              protocol       = "udp"
+            },
+          ]
+          extra_hosts = [
+            {
+              hostname   = "app.local"
+              ip_address = "127.0.0.1"
+            },
+          ]
+          mount_points              = []
+          volumes_from              = []
+          privileged                = false
+          read_only_root_filesystem = false
+        }
+      ])
+    }
+  ]
+
+  task_extra_iam_policies = [
+    {
+      task_name  = "task3"
+      policy_arn = aws_iam_policy.test_extra_iam_policy.arn
+    }
+  ]
 }
-```
-```hcl
-aws_region = "us-east-1"
-is_enabled = true
 
-auto_scaling_config = [
-  {
-    name         = "auto-scaling-identifier"
-    dimension    = "DesireCount"
-    resource_id  = "mycluster/my-service"
-    min_capacity = 1
-    max_capacity = 10
-    type         = "ecs"
-  },
-  {
-    name         = "auto-scaling-another"
-    dimension    = "DesireCount"
-    resource_id  = "mycluster/my-service"
-    min_capacity = 2
-    max_capacity = 10
-    type         = "ecs"
+
+resource "aws_iam_policy" "test_extra_iam_policy" {
+  name   = "test_extra_iam_policy"
+  policy = data.aws_iam_policy_document.test_extra_iam_policy_doc.json
+}
+
+data "aws_iam_policy_document" "test_extra_iam_policy_doc" {
+  statement {
+    effect    = "Allow"
+    resources = ["*"]
+
+    actions = [
+      "ec2:Describe*",
+    ]
   }
-]
-```
-
-```hcl
-aws_region = "us-east-1"
-is_enabled = true
-
-auto_scaling_config = [
-  {
-    name         = "auto-scaling-identifier"
-    dimension    = "DesireCount"
-    resource_id  = "mycluster/my-service"
-    min_capacity = 1
-    max_capacity = 10
-    type         = "ecs"
-  },
-  {
-    name         = "auto-scaling-another"
-    dimension    = "DesireCount"
-    resource_id  = "mycluster/my-service"
-    min_capacity = 2
-    max_capacity = 10
-    type         = "ecs"
-  }
-]
-
-auto_scaling_ecs_config= [
-  {
-    // All the other are optionals, so it'll inherit the default values.
-    name = "auto-scaling-identifier"
-  },
-  {
-    name                = "auto-scaling-another"
-    target_metric_value = 20
-  }
-]
+}
 ```
 
 For module composition, It's recommended to take a look at the module's `outputs` to understand what's available:
@@ -104,34 +206,60 @@ output "tags_set" {
 Custom outputs
 -------------------------------------
 */
-output "aws_region_for_deploy" {
-  value       = local.aws_region_to_deploy
-  description = "The AWS region where the module is deployed."
+output "ecs_task_definition_arn" {
+  value       = [for t in aws_ecs_task_definition.this : t.arn]
+  description = "The ARN of the task definition."
 }
 
-output "app_autoscaling_ecs_id" {
-  value       = [for ac in aws_appautoscaling_target.ecs_target : ac.id]
-  description = "The ID of the application autoscaling target for ECS."
+output "ecs_task_definition_family" {
+  value       = [for t in aws_ecs_task_definition.this : t.family]
+  description = "The family of the task definition."
 }
 
-output "app_autoscaling_ecs_role_arn" {
-  value       = [for ac in aws_appautoscaling_target.ecs_target : ac.role_arn]
-  description = "The ARN of the application autoscaling target for ECS."
+output "ecs_task_definition_revision" {
+  value       = [for t in aws_ecs_task_definition.this : t.revision]
+  description = "The revision of the task definition."
 }
 
-output "app_autoscaling_ecs_min_capacity" {
-  value       = [for ac in aws_appautoscaling_target.ecs_target : ac.min_capacity]
-  description = "The minimum capacity of the application autoscaling target for ECS."
+output "ecs_task_definition_task_role_arn" {
+  value       = [for t in aws_ecs_task_definition.this : t.task_role_arn]
+  description = "The ARN of the IAM role that grants containers in the task permission to call AWS APIs on your behalf."
 }
 
-output "app_autoscaling_ecs_max_capacity" {
-  value       = [for ac in aws_appautoscaling_target.ecs_target : ac.max_capacity]
-  description = "The maximum capacity of the application autoscaling target for ECS."
+output "ecs_task_definition_execution_role_arn" {
+  value       = [for t in aws_ecs_task_definition.this : t.execution_role_arn]
+  description = "The ARN of the IAM role that grants the Amazon ECS container agent permission to make AWS API calls on your behalf."
 }
 
-output "app_autoscaling_ecs_resource_id" {
-  value       = [for ac in aws_appautoscaling_target.ecs_target : ac.resource_id]
-  description = "The resource ID of the application autoscaling target for ECS."
+output "ecs_task_definition_network_mode" {
+  value       = [for t in aws_ecs_task_definition.this : t.network_mode]
+  description = "The network mode of the task definition."
+}
+
+output "ecs_task_definition_container_definitions" {
+  value       = [for t in aws_ecs_task_definition.this : t.container_definitions]
+  description = "The container definitions of the task definition."
+}
+
+output "ecs_task_definition_cpu" {
+  value       = [for t in aws_ecs_task_definition.this : t.cpu]
+  description = "The number of CPU units used by the task."
+}
+
+output "ecs_task_definition_memory" {
+  value       = [for t in aws_ecs_task_definition.this : t.memory]
+  description = "The amount (in MiB) of memory used by the task."
+}
+
+output "ecs_task_definition_proxy_configuration" {
+  value       = [for t in aws_ecs_task_definition.this : t.proxy_configuration]
+  description = "The proxy configuration of the task definition."
+}
+
+// FIXME: Fix this functionality later.
+output "is_extra_iam_policies_passed"{
+  value = local.extra_iam_policies
+  description = "Whether the extra IAM policies are passed or not."
 }
 ```
 ---
@@ -142,7 +270,7 @@ output "app_autoscaling_ecs_resource_id" {
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 4.54.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 4.57.1 |
 
 ## Modules
 
@@ -152,10 +280,7 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_appautoscaling_policy.ecs_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
-| [aws_appautoscaling_policy.ecs_scale_down](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
-| [aws_appautoscaling_policy.ecs_scale_up](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
-| [aws_appautoscaling_target.ecs_target](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_target) | resource |
+| [aws_ecs_task_definition.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
 
 ## Requirements
 
@@ -169,23 +294,28 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_auto_scaling_config"></a> [auto\_scaling\_config](#input\_auto\_scaling\_config) | A configuration object, that defines an auto-scaling configuration for an application in AWS. This object doesn't<br>define the auto-scaling specifics configuration. For such configurations, please refer to the input variable<br>'var.auto\_scaling\_ecs\_config' or the one that corresponds to the specific AWS application (DynamoDB, Aurora, ECS, etc.)<br>The current attributes that are supported are:<br>- name: Unique identifier for this auto-scaling configuration.<br>- type: The type of the auto-scaling configuration. E.g.: ecs, dynamodb, aurora.<br>- resource\_id: Unique identifier for this auto-scaling configuration.<br>- dimension: The dimension of the auto-scaling configuration.<br>- min\_capacity: The minimum capacity of the auto-scaling configuration.<br>- max\_capacity: The maximum capacity of the auto-scaling configuration.<br>- role\_arn: The ARN of the IAM role that allows Application Auto Scaling to modify your scalable target on your behalf. | <pre>list(object({<br>    name         = string<br>    type         = string<br>    resource_id  = string<br>    dimension    = string<br>    min_capacity = optional(number, 1)<br>    max_capacity = optional(number, 1)<br>    role_arn     = optional(string, null)<br>  }))</pre> | `null` | no |
-| <a name="input_auto_scaling_ecs_config"></a> [auto\_scaling\_ecs\_config](#input\_auto\_scaling\_ecs\_config) | A configuration object, that defines an auto-scaling configuration for an application in AWS. This<br>  configuration is used to configure the auto-scaling for an application in AWS.<br>Current attributes supported:<br>- name: Unique identifier for this auto-scaling configuration.<br>- adjustment\_type: The adjustment type, which specifies how ScalingAdjustment is interpreted. Valid values are ChangeInCapacity, ExactCapacity, and PercentChangeInCapacity.<br>- metric\_aggregation\_type: The aggregation type for the CloudWatch metrics. Valid values are Minimum, Maximum, and Average.<br>- scale\_up\_cool\_down: The amount of time, in seconds, after a scale in activity completes before another scale in activity can start.<br>- scale\_down\_cool\_down: The amount of time, in seconds, after a scale out activity completes before another scale out activity can start.<br>- scale\_up\_adjustment: The amount by which to scale, based on the specified adjustment type. A positive value adds to the current capacity while a negative number removes from the current capacity.<br>- scale\_down\_adjustment: The amount by which to scale, based on the specified adjustment type. A positive value adds to the current capacity while a negative number removes from the current capacity.<br>- target\_metric\_type: The metric type. The only valid value is ECSServiceAverageCPUUtilization.<br>- target\_metric\_value: The target value for the metric. | <pre>list(object({<br>    name                    = string<br>    adjustment_type         = optional(string, "ChangeInCapacity")<br>    metric_aggregation_type = optional(string, "Average")<br>    scale_up_cool_down      = optional(number, 60)<br>    scale_down_cool_down    = optional(number, 60)<br>    scale_up_adjustment     = optional(number, 1)<br>    scale_down_adjustment   = optional(number, -1)<br>    target_metric_type      = optional(string, "ECSServiceAverageCPUUtilization")<br>    target_metric_value     = optional(number, 50)<br>  }))</pre> | `null` | no |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | AWS region to deploy the resources | `string` | n/a | yes |
 | <a name="input_is_enabled"></a> [is\_enabled](#input\_is\_enabled) | Whether this module will be created or not. It is useful, for stack-composite<br>modules that conditionally includes resources provided by this module.. | `bool` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all resources. | `map(string)` | `{}` | no |
+| <a name="input_task_config"></a> [task\_config](#input\_task\_config) | A list of objects that contains the configuration for each task definition.<br>The currently supported attributes are:<br>- name: The name of the task definition.<br>- family: The family of the task definition. If not provided, it'll use the name.<br>- container\_definition\_from\_json: The JSON string that contains the container definition.<br>- container\_definition\_from\_file: The path to the file that contains the container definition.<br>- type: The type of the task definition. Valid values are: EC2, FARGATE. Default: FARGATE.<br>- network\_mode: The network mode of the task definition. Valid values are: awsvpc, bridge, host, none. Default: awsvpc.<br>- cpu: The number of CPU units to reserve for the container. Default: 256.<br>- memory: The amount of memory (in MiB) to allow the container to use. Default: 512.<br>- task\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- execution\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- permissions\_boundary: The ARN of the policy that is used to set the permissions boundary for the task role. | <pre>list(object({<br>    // General settings<br>    name                           = string<br>    family                         = optional(string, null)<br>    container_definition_from_json = optional(string, null)<br>    container_definition_from_file = optional(string, null)<br>    type                           = optional(string, "FARGATE")<br>    network_mode                   = optional(string, null)<br>    // Capacity<br>    cpu    = optional(number, 256)<br>    memory = optional(number, 512)<br>    // Permissions<br>    task_role_arn              = optional(string, null) // If null, it'll create the IAM Role as part of this module.<br>    execution_role_arn        = optional(string, null) // If null, it'll create the IAM Role as part of this module.<br>    permissions_boundary       = optional(string, null)<br>    // proxy_configuration<br>    proxy_configuration = optional(object({<br>      type           = string<br>      container_name = string<br>      properties = optional(list(object({<br>        name  = string<br>        value = string<br>      })), [])<br>    }), null)<br>    // Ephemeral storage<br>    ephemeral_storage = optional(number, null)<br>  }))</pre> | `null` | no |
+| <a name="input_task_extra_iam_policies"></a> [task\_extra\_iam\_policies](#input\_task\_extra\_iam\_policies) | A list of objects that contains the configuration for each extra IAM policy.<br>The currently supported attributes are:<br>- task\_name: The name of the task definition.<br>- policy\_arn: The ARN of the policy.<br>- role\_name: The name of the role to attach the policy to. If not provided, it'll use the task role. | <pre>list(object({<br>    task_name  = string<br>    policy_arn = string<br>    role_name  = optional(string, null)<br>  }))</pre> | `null` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_app_autoscaling_ecs_id"></a> [app\_autoscaling\_ecs\_id](#output\_app\_autoscaling\_ecs\_id) | The ID of the application autoscaling target for ECS. |
-| <a name="output_app_autoscaling_ecs_max_capacity"></a> [app\_autoscaling\_ecs\_max\_capacity](#output\_app\_autoscaling\_ecs\_max\_capacity) | The maximum capacity of the application autoscaling target for ECS. |
-| <a name="output_app_autoscaling_ecs_min_capacity"></a> [app\_autoscaling\_ecs\_min\_capacity](#output\_app\_autoscaling\_ecs\_min\_capacity) | The minimum capacity of the application autoscaling target for ECS. |
-| <a name="output_app_autoscaling_ecs_resource_id"></a> [app\_autoscaling\_ecs\_resource\_id](#output\_app\_autoscaling\_ecs\_resource\_id) | The resource ID of the application autoscaling target for ECS. |
-| <a name="output_app_autoscaling_ecs_role_arn"></a> [app\_autoscaling\_ecs\_role\_arn](#output\_app\_autoscaling\_ecs\_role\_arn) | The ARN of the application autoscaling target for ECS. |
-| <a name="output_aws_region_for_deploy"></a> [aws\_region\_for\_deploy](#output\_aws\_region\_for\_deploy) | The AWS region where the module is deployed. |
 | <a name="output_aws_region_for_deploy_this"></a> [aws\_region\_for\_deploy\_this](#output\_aws\_region\_for\_deploy\_this) | The AWS region where the module is deployed. |
+| <a name="output_ecs_task_definition_arn"></a> [ecs\_task\_definition\_arn](#output\_ecs\_task\_definition\_arn) | The ARN of the task definition. |
+| <a name="output_ecs_task_definition_container_definitions"></a> [ecs\_task\_definition\_container\_definitions](#output\_ecs\_task\_definition\_container\_definitions) | The container definitions of the task definition. |
+| <a name="output_ecs_task_definition_cpu"></a> [ecs\_task\_definition\_cpu](#output\_ecs\_task\_definition\_cpu) | The number of CPU units used by the task. |
+| <a name="output_ecs_task_definition_execution_role_arn"></a> [ecs\_task\_definition\_execution\_role\_arn](#output\_ecs\_task\_definition\_execution\_role\_arn) | The ARN of the IAM role that grants the Amazon ECS container agent permission to make AWS API calls on your behalf. |
+| <a name="output_ecs_task_definition_family"></a> [ecs\_task\_definition\_family](#output\_ecs\_task\_definition\_family) | The family of the task definition. |
+| <a name="output_ecs_task_definition_memory"></a> [ecs\_task\_definition\_memory](#output\_ecs\_task\_definition\_memory) | The amount (in MiB) of memory used by the task. |
+| <a name="output_ecs_task_definition_network_mode"></a> [ecs\_task\_definition\_network\_mode](#output\_ecs\_task\_definition\_network\_mode) | The network mode of the task definition. |
+| <a name="output_ecs_task_definition_proxy_configuration"></a> [ecs\_task\_definition\_proxy\_configuration](#output\_ecs\_task\_definition\_proxy\_configuration) | The proxy configuration of the task definition. |
+| <a name="output_ecs_task_definition_revision"></a> [ecs\_task\_definition\_revision](#output\_ecs\_task\_definition\_revision) | The revision of the task definition. |
+| <a name="output_ecs_task_definition_task_role_arn"></a> [ecs\_task\_definition\_task\_role\_arn](#output\_ecs\_task\_definition\_task\_role\_arn) | The ARN of the IAM role that grants containers in the task permission to call AWS APIs on your behalf. |
 | <a name="output_is_enabled"></a> [is\_enabled](#output\_is\_enabled) | Whether the module is enabled or not. |
+| <a name="output_is_extra_iam_policies_passed"></a> [is\_extra\_iam\_policies\_passed](#output\_is\_extra\_iam\_policies\_passed) | Whether the extra IAM policies are passed or not. |
 | <a name="output_tags_set"></a> [tags\_set](#output\_tags\_set) | The tags set for the module. |
 <!-- END_TF_DOCS -->
