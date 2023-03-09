@@ -173,6 +173,81 @@ output "execution_role_ooo_assume_policy_doc" {
   value       = [for role in aws_iam_role.execution_role_ooo : role.assume_role_policy]
   description = "The IAM policy document of the OOO execution role (common)."
 }
+
+output "execution_role_custom_id" {
+  value       = [for role in aws_iam_role.execution_role_custom : role.id]
+  description = "The ID of the custom execution role."
+}
+
+output "execution_role_custom_arn" {
+  value       = [for role in aws_iam_role.execution_role_custom : role.arn]
+  description = "The ARN of the custom execution role."
+}
+
+output "execution_role_custom_name" {
+  value       = [for role in aws_iam_role.execution_role_custom : role.name]
+  description = "The name of the custom execution role."
+}
+
+output "execution_role_custom_unique_id" {
+  value       = [for role in aws_iam_role.execution_role_custom : role.unique_id]
+  description = "The unique ID of the custom execution role."
+}
+
+output "execution_role_custom_assume_policy_doc" {
+  value       = [for role in aws_iam_role.execution_role_custom : role.assume_role_policy]
+  description = "The IAM policy document of the custom execution role."
+}
+
+output "task_role_ooo_id"{
+  value       = [for role in aws_iam_role.task_role_ooo : role.id]
+  description = "The ID of the OOO task role (common)."
+}
+
+output "task_role_ooo_arn"{
+  value       = [for role in aws_iam_role.task_role_ooo : role.arn]
+  description = "The ARN of the OOO task role (common)."
+}
+
+output "task_role_ooo_name"{
+  value       = [for role in aws_iam_role.task_role_ooo : role.name]
+  description = "The name of the OOO task role (common)."
+}
+
+output "task_role_ooo_unique_id"{
+  value       = [for role in aws_iam_role.task_role_ooo : role.unique_id]
+  description = "The unique ID of the OOO task role (common)."
+}
+
+output "task_role_ooo_assume_policy_doc"{
+  value       = [for role in aws_iam_role.task_role_ooo : role.assume_role_policy]
+  description = "The IAM policy document of the OOO task role (common)."
+}
+
+output "task_role_custom_id"{
+  value       = [for role in aws_iam_role.task_role_custom : role.id]
+  description = "The ID of the custom task role."
+}
+
+output "task_role_custom_arn"{
+  value       = [for role in aws_iam_role.task_role_custom : role.arn]
+  description = "The ARN of the custom task role."
+}
+
+output "task_role_custom_name"{
+  value       = [for role in aws_iam_role.task_role_custom : role.name]
+  description = "The name of the custom task role."
+}
+
+output "task_role_custom_unique_id"{
+  value       = [for role in aws_iam_role.task_role_custom : role.unique_id]
+  description = "The unique ID of the custom task role."
+}
+
+output "task_role_custom_assume_policy_doc"{
+  value       = [for role in aws_iam_role.task_role_custom : role.assume_role_policy]
+  description = "The IAM policy document of the custom task role."
+}
 ```
 ---
 
@@ -241,6 +316,11 @@ output "execution_role_ooo_assume_policy_doc" {
 | Name | Description |
 |------|-------------|
 | <a name="output_aws_region_for_deploy_this"></a> [aws\_region\_for\_deploy\_this](#output\_aws\_region\_for\_deploy\_this) | The AWS region where the module is deployed. |
+| <a name="output_execution_role_custom_arn"></a> [execution\_role\_custom\_arn](#output\_execution\_role\_custom\_arn) | The ARN of the custom execution role. |
+| <a name="output_execution_role_custom_assume_policy_doc"></a> [execution\_role\_custom\_assume\_policy\_doc](#output\_execution\_role\_custom\_assume\_policy\_doc) | The IAM policy document of the custom execution role. |
+| <a name="output_execution_role_custom_id"></a> [execution\_role\_custom\_id](#output\_execution\_role\_custom\_id) | The ID of the custom execution role. |
+| <a name="output_execution_role_custom_name"></a> [execution\_role\_custom\_name](#output\_execution\_role\_custom\_name) | The name of the custom execution role. |
+| <a name="output_execution_role_custom_unique_id"></a> [execution\_role\_custom\_unique\_id](#output\_execution\_role\_custom\_unique\_id) | The unique ID of the custom execution role. |
 | <a name="output_execution_role_ooo_arn"></a> [execution\_role\_ooo\_arn](#output\_execution\_role\_ooo\_arn) | The ARN of the OOO execution role (common). |
 | <a name="output_execution_role_ooo_assume_policy_doc"></a> [execution\_role\_ooo\_assume\_policy\_doc](#output\_execution\_role\_ooo\_assume\_policy\_doc) | The IAM policy document of the OOO execution role (common). |
 | <a name="output_execution_role_ooo_id"></a> [execution\_role\_ooo\_id](#output\_execution\_role\_ooo\_id) | The ID of the OOO execution role (common). |
@@ -248,4 +328,14 @@ output "execution_role_ooo_assume_policy_doc" {
 | <a name="output_execution_role_ooo_unique_id"></a> [execution\_role\_ooo\_unique\_id](#output\_execution\_role\_ooo\_unique\_id) | The unique ID of the OOO execution role (common). |
 | <a name="output_is_enabled"></a> [is\_enabled](#output\_is\_enabled) | Whether the module is enabled or not. |
 | <a name="output_tags_set"></a> [tags\_set](#output\_tags\_set) | The tags set for the module. |
+| <a name="output_task_role_custom_arn"></a> [task\_role\_custom\_arn](#output\_task\_role\_custom\_arn) | The ARN of the custom task role. |
+| <a name="output_task_role_custom_assume_policy_doc"></a> [task\_role\_custom\_assume\_policy\_doc](#output\_task\_role\_custom\_assume\_policy\_doc) | The IAM policy document of the custom task role. |
+| <a name="output_task_role_custom_id"></a> [task\_role\_custom\_id](#output\_task\_role\_custom\_id) | The ID of the custom task role. |
+| <a name="output_task_role_custom_name"></a> [task\_role\_custom\_name](#output\_task\_role\_custom\_name) | The name of the custom task role. |
+| <a name="output_task_role_custom_unique_id"></a> [task\_role\_custom\_unique\_id](#output\_task\_role\_custom\_unique\_id) | The unique ID of the custom task role. |
+| <a name="output_task_role_ooo_arn"></a> [task\_role\_ooo\_arn](#output\_task\_role\_ooo\_arn) | The ARN of the OOO task role (common). |
+| <a name="output_task_role_ooo_assume_policy_doc"></a> [task\_role\_ooo\_assume\_policy\_doc](#output\_task\_role\_ooo\_assume\_policy\_doc) | The IAM policy document of the OOO task role (common). |
+| <a name="output_task_role_ooo_id"></a> [task\_role\_ooo\_id](#output\_task\_role\_ooo\_id) | The ID of the OOO task role (common). |
+| <a name="output_task_role_ooo_name"></a> [task\_role\_ooo\_name](#output\_task\_role\_ooo\_name) | The name of the OOO task role (common). |
+| <a name="output_task_role_ooo_unique_id"></a> [task\_role\_ooo\_unique\_id](#output\_task\_role\_ooo\_unique\_id) | The unique ID of the OOO task role (common). |
 <!-- END_TF_DOCS -->
