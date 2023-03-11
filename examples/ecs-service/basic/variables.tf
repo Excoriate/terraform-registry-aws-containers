@@ -1,23 +1,47 @@
 variable "is_enabled" {
-  description = "Enable or disable the module"
   type        = bool
+  description = <<EOF
+  Whether this module will be created or not. It is useful, for stack-composite
+modules that conditionally includes resources provided by this module..
+EOF
 }
 
 variable "aws_region" {
-  description = "AWS region"
   type        = string
+  description = "AWS region to deploy the resources"
+}
+
+variable "tags" {
+  type        = map(string)
+  description = "A map of tags to add to all resources."
+  default     = {}
+}
+
+/*
+-------------------------------------
+Custom input variables
+-------------------------------------
+*/
+variable "ecs_service_permissions_config" {
+  type = list(object({
+    name                 = string
+    execution_role_arn   = optional(string, null)
+    iam_role_arn         = optional(string, null)
+    permissions_boundary = optional(string, null)
+  }))
+  default = null
+
 }
 
 variable "ecs_service_config" {
   type = list(object({
     // General settings
     name                               = string
-    task_definition_arn                = string
-    network_mode                       = optional(string, null)
+    task_definition                    = string
     desired_count                      = optional(number, 1)
     deployment_maximum_percent         = optional(number, 200)
     deployment_minimum_healthy_percent = optional(number, 100)
-    health_check_grace_period_seconds  = optional(number, 30)
+    health_check_grace_period_seconds  = optional(number, null)
     launch_type                        = optional(string, "FARGATE")
     platform_version                   = optional(string, "LATEST")
     scheduling_strategy                = optional(string, "REPLICA")
@@ -26,11 +50,9 @@ variable "ecs_service_config" {
     force_new_deployment               = optional(bool, false)
     enable_execute_command             = optional(bool, false)
     cluster                            = string
-
-    // Permissions
-    ecs_execution_role   = optional(string, null) // If null, it'll create the IAM Role as part of this module.
-    ecs_iam_role         = optional(string, null) // optional, and only used if the network mode isn't awsvpc and there are load balancers configured.
-    permissions_boundary = optional(string, null)
+    propagate_tags                     = optional(string, "TASK_DEFINITION")
+    enable_deployment_circuit_breaker  = optional(bool, false)
+    trigger_deploy_on_apply            = optional(bool, false)
 
     // Load balancer config
     load_balancers_config = optional(list(object({
@@ -38,6 +60,7 @@ variable "ecs_service_config" {
       container_name   = string
       container_port   = number
     })), [])
+
     // network configuration
     network_config = optional(object({
       mode             = optional(string, "awsvpc")
@@ -65,25 +88,10 @@ The currently supported attributes are:
 - force_new_deployment: Whether to force a new deployment of the service. Defaults to false.
 - enable_execute_command: Whether to enable execute command functionality for the containers in this service. Defaults to false.
 - cluster: The name of the cluster on which to run your service.
-- ecs_execution_role: The name or full ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.
-- ecs_iam_role: The name or full ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.
-- permissions_boundary: The ARN of the policy that is used to set the permissions boundary for the task role and execution role for the task.
 - target_group_config: A list of objects that contains the configuration for each target group.
-  EOF
-}
-
-variable "ecs_extra_iam_policies" {
-  type = list(object({
-    ecs_service = string
-    policy_arn  = string
-    role_name   = optional(string, null)
-  }))
-  default     = null
-  description = <<EOF
-  A list of objects that contains the configuration for each extra IAM policy.
-The currently supported attributes are:
-- ecs_service: The name of the ECS service to attach the policy to.
-- policy_arn: The ARN of the policy.
-- role_name: The name of the role to attach the policy to. If not provided, it'll use the task role.
+- network_config: A list of objects that contains the configuration for each network.
+- propagate_tags: Specifies whether to propagate the tags from the task definition or the service to the tasks in the service. The valid values are: TASK_DEFINITION and SERVICE. The default value is SERVICE.
+- enable_deployment_circuit_breaker: Specifies whether to enable a deployment circuit breaker for the service. Defaults to false.
+- trigger_deploy_on_apply: Whether to trigger a new deployment of the service when the Terraform apply is executed. Defaults to false.
   EOF
 }

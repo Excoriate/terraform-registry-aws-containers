@@ -1,5 +1,10 @@
+locals {
+  redeployment_trigger = {
+    redeployment = timestamp()
+  }
+}
 resource "aws_ecs_service" "this" {
-  for_each                           = local.ecs_config_to_create
+  for_each                           = local.ecs_config_create
   name                               = each.value["name"]
   cluster                            = each.value["cluster"]
   task_definition                    = each.value["task_definition"]
@@ -10,11 +15,12 @@ resource "aws_ecs_service" "this" {
   launch_type                        = each.value["launch_type"]
   platform_version                   = each.value["platform_version"]
   scheduling_strategy                = each.value["scheduling_strategy"]
-  iam_role                           = each.value["is_ecs_execution_role_to_be_created"] && each.value["is_ecs_iam_role_to_be_merged"] ? coalesce(each.value["iam_role_to_attach"], aws_iam_role.this[each.key].arn) : each.value["is_ecs_execution_role_to_be_created"] ? aws_iam_role.this[each.key].arn : null
+  iam_role                           = !local.is_ecs_permission_enabled ? null : each.value["is_network_awsvpc_enabled"] ? null : lookup({ for k, v in local.ecs_permissions_create : k => v if v["name"] == each.value["name"] }, "iam_role_arn", join("", [for role in aws_iam_role.this : role.arn]))
   wait_for_steady_state              = each.value["wait_for_steady_state"]
   force_new_deployment               = each.value["force_new_deployment"]
   enable_ecs_managed_tags            = each.value["enable_ecs_managed_tags"]
   tags                               = var.tags
+  propagate_tags                     = each.value["propagate_tags"]
 
   dynamic "load_balancer" {
     for_each = !each.value["is_load_balancers_enabled"] ? [] : each.value["load_balancer_config"]
@@ -33,4 +39,14 @@ resource "aws_ecs_service" "this" {
       assign_public_ip = network_configuration.value["assign_public_ip"]
     }
   }
+
+  dynamic "deployment_circuit_breaker" {
+    for_each = !each.value["is_deployment_circuit_breaker_enabled"] ? {} : each.value["deployment_circuit_breaker"]
+    content {
+      enable   = true
+      rollback = true
+    }
+  }
+
+  triggers = each.value["is_deployment_on_apply_enabled"] ? local.redeployment_trigger : null
 }

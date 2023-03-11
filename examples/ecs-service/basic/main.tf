@@ -53,21 +53,21 @@ module "task" {
 }
 
 
-resource "aws_iam_policy" "test_extra_iam_policy" {
-  name   = "test_extra_iam_policy"
-  policy = data.aws_iam_policy_document.test_extra_iam_policy_doc.json
-}
-
-data "aws_iam_policy_document" "test_extra_iam_policy_doc" {
-  statement {
-    effect    = "Allow"
-    resources = ["*"]
-
-    actions = [
-      "ec2:Describe*",
-    ]
-  }
-}
+#resource "aws_iam_policy" "test_extra_iam_policy" {
+#  name   = "test_extra_iam_policy"
+#  policy = data.aws_iam_policy_document.test_extra_iam_policy_doc.json
+#}
+#
+#data "aws_iam_policy_document" "test_extra_iam_policy_doc" {
+#  statement {
+#    effect    = "Allow"
+#    resources = ["*"]
+#
+#    actions = [
+#      "ec2:Describe*",
+#    ]
+#  }
+#}
 
 
 module "main_module" {
@@ -77,10 +77,11 @@ module "main_module" {
 
   ecs_service_config = [
     {
-      cluster             = "tsn-sandbox-us-east-1-users-workload-users-ecs-fargate"
-      name                = "service1"
-      task_definition_arn = module.task.ecs_task_definition_arn[0]
-      ecs_execution_role  = "NO-CREATE"
+      cluster         = "tsn-sandbox-us-east-1-users-workload-users-ecs-fargate"
+      name            = "service1"
+      task_definition = module.task.ecs_task_definition_arn[0]
     }
   ]
+
+  ecs_service_permissions_config = var.ecs_service_permissions_config
 }
