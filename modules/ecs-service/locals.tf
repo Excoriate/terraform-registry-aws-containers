@@ -52,6 +52,7 @@ locals {
       */
       is_task_definition_changes_ignored_enabled = t["enable_ignore_changes_on_task_definition"] == null ? false : t["enable_ignore_changes_on_task_definition"]
       is_desired_count_changes_ignored_enabled   = t["enable_ignore_changes_on_desired_count"] == null ? false : t["enable_ignore_changes_on_desired_count"]
+      create_built_in_permissions                = length([for permissions in local.ecs_permissions_create : permissions if permissions["name"] == t["name"] && permissions["create"]]) == 0 ? false : true
     }
   ]
 
@@ -65,13 +66,12 @@ locals {
 
   ecs_permissions_normalised = !local.is_ecs_permission_enabled ? [] : [
     for ecs_permission in var.ecs_service_permissions_config : {
-      name                 = lower(trimspace(ecs_permission["name"]))
-      execution_role_arn   = ecs_permission["execution_role_arn"] == null ? null : lower(trimspace(ecs_permission["execution_role_arn"]))
-      iam_role_arn         = ecs_permission["iam_role_arn"] == null ? null : lower(trimspace(ecs_permission["iam_role_arn"]))
-      permissions_boundary = ecs_permission["permissions_boundary"] == null ? null : lower(trimspace(ecs_permission["permissions_boundary"]))
-
-      // feature flags.
-      create_execution_role_enabled = ecs_permission["execution_role_arn"] == null ? false : true
+      name                         = lower(trimspace(ecs_permission["name"]))
+      execution_role_arn           = ecs_permission["execution_role_arn"] == null ? null : lower(trimspace(ecs_permission["execution_role_arn"]))
+      iam_role_arn                 = ecs_permission["iam_role_arn"] == null ? null : lower(trimspace(ecs_permission["iam_role_arn"]))
+      permissions_boundary         = ecs_permission["permissions_boundary"] == null ? null : lower(trimspace(ecs_permission["permissions_boundary"]))
+      disable_built_in_permissions = ecs_permission["disable_built_in_permissions"] == null ? false : ecs_permission["disable_built_in_permissions"]
+      create                       = ecs_permission["disable_built_in_permissions"] == null ? true : ecs_permission["disable_built_in_permissions"] == true ? false : true
     }
   ]
 

@@ -24,13 +24,22 @@ Custom input variables
 */
 variable "ecs_service_permissions_config" {
   type = list(object({
-    name                 = string
-    execution_role_arn   = optional(string, null)
-    iam_role_arn         = optional(string, null)
-    permissions_boundary = optional(string, null)
+    name                         = string
+    execution_role_arn           = optional(string, null)
+    iam_role_arn                 = optional(string, null)
+    permissions_boundary         = optional(string, null)
+    disable_built_in_permissions = optional(bool, false)
   }))
-  default = null
-
+  default     = null
+  description = <<EOF
+  A list of objects that contains the configuration for each ECS service permissions.
+The currently supported attributes are:
+- name: The name of the ECS service permissions.
+- execution_role_arn: The ARN of the execution role that the Amazon ECS container agent and the Docker daemon can assume.
+- iam_role_arn: The ARN of the IAM role that allows your Amazon ECS container agent to make calls to your load balancer on your behalf.
+- permissions_boundary: The ARN of the policy that is used to set the permissions boundary for the task role and execution role for the task.
+- disable_built_in_permissions: Whether to disable the built-in permissions for the task role. Defaults to false.
+  EOF
 }
 
 variable "ecs_service_config" {

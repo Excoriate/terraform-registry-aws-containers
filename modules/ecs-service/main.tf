@@ -16,7 +16,7 @@ resource "aws_ecs_service" "this" {
   launch_type                        = each.value["launch_type"]
   platform_version                   = each.value["platform_version"]
   scheduling_strategy                = each.value["scheduling_strategy"]
-  iam_role                           = !local.is_ecs_permission_enabled ? null : each.value["is_network_awsvpc_enabled"] ? null : lookup({ for k, v in local.ecs_permissions_create : k => v if v["name"] == each.value["name"] }, "iam_role_arn", join("", [for role in aws_iam_role.this : role.arn]))
+  iam_role                           = !each.value["create_built_in_permissions"] ? null : each.value["is_network_awsvpc_enabled"] ? null : lookup({ for k, v in local.ecs_permissions_create : k => v if v["name"] == each.value["name"] }, "iam_role_arn", join("", [for role in aws_iam_role.this : role.arn]))
   wait_for_steady_state              = each.value["wait_for_steady_state"]
   force_new_deployment               = each.value["force_new_deployment"]
   enable_ecs_managed_tags            = each.value["enable_ecs_managed_tags"]
