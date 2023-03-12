@@ -12,10 +12,10 @@ locals {
       name            = lower(trimspace(t["name"]))
       task_definition = t["task_definition"]
       network_configuration = t["network_config"] == null ? null : {
-        mode             = t["network_mode"]["mode"] == null ? "awsvpc" : lower(trimspace(t["network_mode"]["mode"]))
-        subnets          = t["network_mode"]["subnets"] == null ? [] : t["network_mode"]["subnets"]
-        security_groups  = t["network_mode"]["security_groups"] == null ? [] : t["network_mode"]["security_groups"]
-        assign_public_ip = t["network_mode"]["assign_public_ip"] == null ? false : t["network_mode"]["assign_public_ip"]
+        mode             = t["network_config"]["mode"] == null ? "awsvpc" : lower(trimspace(t["network_config"]["mode"]))
+        subnets          = t["network_config"]["subnets"] == null ? [] : t["network_config"]["subnets"]
+        security_groups  = t["network_config"]["security_groups"] == null ? [] : t["network_config"]["security_groups"]
+        assign_public_ip = t["network_config"]["assign_public_ip"] == null ? false : t["network_config"]["assign_public_ip"]
       }
       desired_count                      = t["desired_count"] == null ? 1 : t["desired_count"]
       deployment_maximum_percent         = t["deployment_maximum_percent"] == null ? 200 : t["deployment_maximum_percent"]

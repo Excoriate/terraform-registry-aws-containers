@@ -24,7 +24,7 @@ resource "aws_ecs_service" "this" {
   propagate_tags                     = each.value["propagate_tags"]
 
   dynamic "load_balancer" {
-    for_each = !each.value["is_load_balancers_enabled"] ? [] : each.value["load_balancer_config"]
+    for_each = !each.value["is_load_balancers_enabled"] ? [] : [each.value["load_balancer_config"]]
     content {
       target_group_arn = load_balancer.value["target_group_arn"]
       container_name   = load_balancer.value["container_name"]
@@ -33,7 +33,7 @@ resource "aws_ecs_service" "this" {
   }
 
   dynamic "network_configuration" {
-    for_each = !each.value["is_network_configuration_enabled"] ? {} : each.value["network_configuration"]
+    for_each = !each.value["is_network_configuration_enabled"] ? [] : [each.value["network_configuration"]]
     content {
       subnets          = network_configuration.value["subnets"]
       security_groups  = network_configuration.value["security_groups"]
@@ -42,7 +42,7 @@ resource "aws_ecs_service" "this" {
   }
 
   dynamic "deployment_circuit_breaker" {
-    for_each = !each.value["is_deployment_circuit_breaker_enabled"] ? {} : each.value["deployment_circuit_breaker"]
+    for_each = !each.value["is_deployment_circuit_breaker_enabled"] ? [] : [each.value["deployment_circuit_breaker"]]
     content {
       enable   = true
       rollback = true
@@ -72,7 +72,7 @@ resource "aws_ecs_service" "ignore_task_definition_changes" {
   propagate_tags                     = each.value["propagate_tags"]
 
   dynamic "load_balancer" {
-    for_each = !each.value["is_load_balancers_enabled"] ? [] : each.value["load_balancer_config"]
+    for_each = !each.value["is_load_balancers_enabled"] ? [] : [each.value["load_balancer_config"]]
     content {
       target_group_arn = load_balancer.value["target_group_arn"]
       container_name   = load_balancer.value["container_name"]
@@ -81,7 +81,7 @@ resource "aws_ecs_service" "ignore_task_definition_changes" {
   }
 
   dynamic "network_configuration" {
-    for_each = !each.value["is_network_configuration_enabled"] ? {} : each.value["network_configuration"]
+    for_each = !each.value["is_network_configuration_enabled"] ? [] : [each.value["network_configuration"]]
     content {
       subnets          = network_configuration.value["subnets"]
       security_groups  = network_configuration.value["security_groups"]
@@ -90,7 +90,7 @@ resource "aws_ecs_service" "ignore_task_definition_changes" {
   }
 
   dynamic "deployment_circuit_breaker" {
-    for_each = !each.value["is_deployment_circuit_breaker_enabled"] ? {} : each.value["deployment_circuit_breaker"]
+    for_each = !each.value["is_deployment_circuit_breaker_enabled"] ? [] : [each.value["deployment_circuit_breaker"]]
     content {
       enable   = true
       rollback = true
@@ -126,7 +126,7 @@ resource "aws_ecs_service" "ignore_desired_count_changes" {
   propagate_tags                     = each.value["propagate_tags"]
 
   dynamic "load_balancer" {
-    for_each = !each.value["is_load_balancers_enabled"] ? [] : each.value["load_balancer_config"]
+    for_each = !each.value["is_load_balancers_enabled"] ? [] : [each.value["load_balancer_config"]]
     content {
       target_group_arn = load_balancer.value["target_group_arn"]
       container_name   = load_balancer.value["container_name"]
@@ -135,7 +135,7 @@ resource "aws_ecs_service" "ignore_desired_count_changes" {
   }
 
   dynamic "network_configuration" {
-    for_each = !each.value["is_network_configuration_enabled"] ? {} : each.value["network_configuration"]
+    for_each = !each.value["is_network_configuration_enabled"] ? [] : [each.value["network_configuration"]]
     content {
       subnets          = network_configuration.value["subnets"]
       security_groups  = network_configuration.value["security_groups"]
@@ -144,7 +144,7 @@ resource "aws_ecs_service" "ignore_desired_count_changes" {
   }
 
   dynamic "deployment_circuit_breaker" {
-    for_each = !each.value["is_deployment_circuit_breaker_enabled"] ? {} : each.value["deployment_circuit_breaker"]
+    for_each = !each.value["is_deployment_circuit_breaker_enabled"] ? [] : [each.value["deployment_circuit_breaker"]]
     content {
       enable   = true
       rollback = true
