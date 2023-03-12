@@ -61,9 +61,11 @@ locals {
          - As soon as the task_permissions_config variable is set, it'll require the user to pass the 'task_role_arn' and 'execution_role_arn' for each task.
          - If the 'name' is present, it's set. Therefore, the built-in roles won't be created
       */
-      is_task_role_passed_by_user      = length([for permissions in local.task_permissions_set_by_user_normalised : permissions if permissions["name"] == t["name"]]) == 0 ? false : true
+      is_task_role_passed_by_user = length([for permissions in local.task_permissions_set_by_user_normalised : permissions if permissions["name"] == t["name"]]) == 0 ? false : true
+      #      is_task_role_passed_by_user      = length([for permissions in local.task_permissions_set_by_user_normalised : permissions if permissions["name"] == t["name"] && permissions["task_role_arn"] != null]) == 0 ? false : true
       is_execution_role_passed_by_user = length([for permissions in local.task_permissions_set_by_user_normalised : permissions if permissions["name"] == t["name"]]) == 0 ? false : true
-      disable_built_in_permissions     = length([for permissions in local.task_permissions_set_by_user_normalised : permissions if permissions["name"] == t["name"] && permissions["disable_built_in_permissions"]]) == 0 ? false : true
+      #      is_execution_role_passed_by_user = length([for permissions in local.task_permissions_set_by_user_normalised : permissions if permissions["name"] == t["name"] && permissions["execution_role_arn"] != null]) == 0 ? false : true
+      disable_built_in_permissions = length([for permissions in local.task_permissions_set_by_user_normalised : permissions if permissions["name"] == t["name"] && permissions["disable_built_in_permissions"]]) == 0 ? false : true
     }
   ]
 
@@ -99,22 +101,22 @@ locals {
   task_role_built_in_create_normalised = !local.is_enabled ? [] : [
     for task in local.task_config_normalized : {
       name   = trimspace(lower(task["name"]))
-      create = task["disable_built_in_permissions"] == false
+      create = task["disable_built_in_permissions"] == true ? false : lookup({ for k, v in local.task_permissions_set_by_user_create : k => v if v["name"] == task["name"] }, "task_role_arn", null) == null ? true : false
     }
   ]
 
   execution_role_built_in_create_normalised = !local.is_enabled ? [] : [
     for task in local.task_config_normalized : {
       name   = trimspace(lower(task["name"]))
-      create = task["disable_built_in_permissions"] == false
+      create = task["disable_built_in_permissions"] == true ? false : lookup({ for k, v in local.task_permissions_set_by_user_create : k => v if v["name"] == task["name"] }, "execution_role_arn", null) == null ? true : false
     }
   ]
 
   task_role_built_in_create = !local.is_enabled ? {} : {
-    for permission in local.task_role_built_in_create_normalised : permission["name"] => permission
+    for permission in local.task_role_built_in_create_normalised : permission["name"] => permission if permission["create"]
   }
 
   execution_role_built_in_create = !local.is_enabled ? {} : {
-    for permission in local.execution_role_built_in_create_normalised : permission["name"] => permission
+    for permission in local.execution_role_built_in_create_normalised : permission["name"] => permission if permission["create"]
   }
 }

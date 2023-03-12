@@ -72,4 +72,20 @@ resource "aws_ecs_task_definition" "built_in_permissions" {
       size_in_gib = ephemeral_storage.value["size_in_gib"]
     }
   }
+
+  dynamic "placement_constraints" {
+    for_each = each.value["task_placement_constraints"]
+    content {
+      type       = placement_constraints.value["type"]
+      expression = placement_constraints.value["expression"]
+    }
+  }
+
+  dynamic "runtime_platform" {
+    for_each = each.value["runtime_platform"]
+    content {
+      operating_system_family = runtime_platform.value["operating_system_family"]
+      cpu_architecture        = runtime_platform.value["cpu_architecture"]
+    }
+  }
 }
