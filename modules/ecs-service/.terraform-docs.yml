@@ -17,7 +17,7 @@ content: |-
     Examples of this module's usage are available in the [examples](./examples) folder.
 
     ```hcl
-    {{ include "../../examples/ecs-task-service/basic/main.tf" }}
+    {{ include "../../examples/ecs-service/basic/main.tf" }}
     ```
 
     For module composition, It's recommended to take a look at the module's `outputs` to understand what's available:

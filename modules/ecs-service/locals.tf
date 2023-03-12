@@ -45,6 +45,13 @@ locals {
       is_network_awsvpc_enabled             = t["network_config"] == null ? false : t["network_config"]["mode"] == null ? false : lower(trimspace(t["network_config"]["mode"])) == "awsvpc" ? true : false
       is_deployment_circuit_breaker_enabled = t["enable_deployment_circuit_breaker"] == null ? false : t["enable_deployment_circuit_breaker"] ? true : false
       is_deployment_on_apply_enabled        = t["trigger_deploy_on_apply"] == null ? false : t["trigger_deploy_on_apply"]
+      /*
+        * The following feature flags are used to ignore changes on the ECS service task definition and desired count.
+        * This is useful when you want to manage the task definition and desired count outside of Terraform.
+        * For example, you can use the AWS CLI to update the task definition and desired count.
+      */
+      is_task_definition_changes_ignored_enabled = t["enable_ignore_changes_on_task_definition"] == null ? false : t["enable_ignore_changes_on_task_definition"]
+      is_desired_count_changes_ignored_enabled   = t["enable_ignore_changes_on_desired_count"] == null ? false : t["enable_ignore_changes_on_desired_count"]
     }
   ]
 

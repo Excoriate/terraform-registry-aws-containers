@@ -35,23 +35,25 @@ variable "ecs_service_permissions_config" {
 variable "ecs_service_config" {
   type = list(object({
     // General settings
-    name                               = string
-    task_definition                    = string
-    desired_count                      = optional(number, 1)
-    deployment_maximum_percent         = optional(number, 200)
-    deployment_minimum_healthy_percent = optional(number, 100)
-    health_check_grace_period_seconds  = optional(number, null)
-    launch_type                        = optional(string, "FARGATE")
-    platform_version                   = optional(string, "LATEST")
-    scheduling_strategy                = optional(string, "REPLICA")
-    enable_ecs_managed_tags            = optional(bool, false)
-    wait_for_steady_state              = optional(bool, true)
-    force_new_deployment               = optional(bool, false)
-    enable_execute_command             = optional(bool, false)
-    cluster                            = string
-    propagate_tags                     = optional(string, "TASK_DEFINITION")
-    enable_deployment_circuit_breaker  = optional(bool, false)
-    trigger_deploy_on_apply            = optional(bool, false)
+    name                                     = string
+    task_definition                          = string
+    desired_count                            = optional(number, 1)
+    deployment_maximum_percent               = optional(number, 200)
+    deployment_minimum_healthy_percent       = optional(number, 100)
+    health_check_grace_period_seconds        = optional(number, null)
+    launch_type                              = optional(string, "FARGATE")
+    platform_version                         = optional(string, "LATEST")
+    scheduling_strategy                      = optional(string, "REPLICA")
+    enable_ecs_managed_tags                  = optional(bool, false)
+    wait_for_steady_state                    = optional(bool, true)
+    force_new_deployment                     = optional(bool, false)
+    enable_execute_command                   = optional(bool, false)
+    cluster                                  = string
+    propagate_tags                           = optional(string, "TASK_DEFINITION")
+    enable_deployment_circuit_breaker        = optional(bool, false)
+    trigger_deploy_on_apply                  = optional(bool, false)
+    enable_ignore_changes_on_desired_count   = optional(bool, false)
+    enable_ignore_changes_on_task_definition = optional(bool, false)
 
     // Load balancer config
     load_balancers_config = optional(list(object({
@@ -92,5 +94,7 @@ The currently supported attributes are:
 - propagate_tags: Specifies whether to propagate the tags from the task definition or the service to the tasks in the service. The valid values are: TASK_DEFINITION and SERVICE. The default value is SERVICE.
 - enable_deployment_circuit_breaker: Specifies whether to enable a deployment circuit breaker for the service. Defaults to false.
 - trigger_deploy_on_apply: Whether to trigger a new deployment of the service when the Terraform apply is executed. Defaults to false.
+- enable_ignore_changes_on_desire_count: Whether to ignore changes on the desire count of the service. Defaults to false.
+- enable_ignore_changes_on_task_definition: Whether to ignore changes on the task definition of the service. Defaults to false.
   EOF
 }

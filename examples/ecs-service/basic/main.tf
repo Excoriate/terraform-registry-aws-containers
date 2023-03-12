@@ -80,6 +80,20 @@ module "main_module" {
       cluster         = "tsn-sandbox-us-east-1-users-workload-users-ecs-fargate"
       name            = "service1"
       task_definition = module.task.ecs_task_definition_arn[0]
+    },
+    {
+      cluster         = "tsn-sandbox-us-east-1-users-workload-users-ecs-fargate"
+      name            = "service2"
+      task_definition = module.task.ecs_task_definition_arn[0]
+      enable_ignore_changes_on_desired_count = true
+      enable_ignore_changes_on_task_definition = false
+    },
+    {
+      cluster         = "tsn-sandbox-us-east-1-users-workload-users-ecs-fargate"
+      name            = "service3"
+      task_definition = module.task.ecs_task_definition_arn[0]
+      enable_ignore_changes_on_desired_count = true
+      enable_ignore_changes_on_task_definition = true
     }
   ]
 
