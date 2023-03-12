@@ -7,11 +7,11 @@
 resource "aws_iam_role" "task_role" {
   for_each           = local.task_role_built_in_create
   name               = format("%s-%s", each.value["name"], "task-exec-role")
-  assume_role_policy = join("", [for doc in [data.aws_iam_policy_document.task_role_assume[each.key]] : doc.json])
+  assume_role_policy = join("", [for doc in [data.aws_iam_policy_document.task_role_policy[each.key]] : doc.json])
   tags               = var.tags
 }
 
-data "aws_iam_policy_document" "task_role_assume" {
+data "aws_iam_policy_document" "task_role_policy" {
   for_each = local.task_role_built_in_create
 
   statement {
@@ -25,7 +25,7 @@ data "aws_iam_policy_document" "task_role_assume" {
   }
 }
 
-data "aws_iam_policy_document" "task_policy_fargate" {
+data "aws_iam_policy_document" "task_role_policy_fargate_doc" {
   for_each = local.task_role_built_in_create
 
   statement {
@@ -81,16 +81,16 @@ data "aws_iam_policy_document" "task_policy_fargate" {
 }
 
 
-resource "aws_iam_policy" "task_policy_fargate" {
+resource "aws_iam_policy" "task_role_policy_fargate" {
   for_each = local.task_role_built_in_create
 
   name   = format("%s-%s", each.value["name"], "task-exec-policy")
-  policy = join("", [for doc in [data.aws_iam_policy_document.task_policy_fargate[each.key]] : doc.json])
+  policy = join("", [for doc in [data.aws_iam_policy_document.task_role_policy_fargate_doc[each.key]] : doc.json])
 }
 
-resource "aws_iam_role_policy_attachment" "task_policy_fargate" {
+resource "aws_iam_role_policy_attachment" "task_role_policy_fargate_attachment" {
   for_each = local.task_role_built_in_create
 
   role       = aws_iam_role.task_role[each.key].id
-  policy_arn = join("", [for pol_arn in [aws_iam_policy.task_policy_fargate[each.key]] : pol_arn.arn])
+  policy_arn = join("", [for pol_arn in [aws_iam_policy.task_role_policy_fargate[each.key]] : pol_arn.arn])
 }

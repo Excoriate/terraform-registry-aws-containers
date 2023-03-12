@@ -62,8 +62,8 @@ The currently supported attributes are:
 variable "task_permissions_config" {
   type = list(object({
     name                 = string
-    task_role_arn        = optional(string, null) // If null, it'll create the IAM Role as part of this module.
-    execution_role_arn   = optional(string, null) // If null, it'll create the IAM Role as part of this module.
+    task_role_arn        = string
+    execution_role_arn   = string
     permissions_boundary = optional(string, null)
   }))
   default     = null
@@ -78,6 +78,11 @@ The currently supported attributes are:
 }
 
 variable "scenario_simple" {
+  type    = bool
+  default = false
+}
+
+variable "scenario_simple_passed_roles" {
   type    = bool
   default = false
 }

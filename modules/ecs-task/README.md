@@ -14,7 +14,124 @@ that can be used in an ECS service.
 Examples of this module's usage are available in the [examples](./examples) folder.
 
 ```hcl
-module "main_module" {
+module "ecs_task_simple" {
+  for_each   = var.scenario_simple ? { enabled = true } : {}
+  source     = "../../../modules/ecs-task"
+  is_enabled = var.is_enabled
+  aws_region = var.aws_region
+
+  task_config = [
+    {
+      name = "task1"
+      container_definition_from_json = jsonencode([
+        {
+          name               = "app"
+          image              = "cloudposse/geodesic"
+          essential          = true
+          interactive        = true
+          pseudo_terminal    = true
+          cpu                = 256
+          memory             = 256
+          memory_reservation = 128
+          log_configuration = {
+            log_driver = "json-file"
+            options = {
+              "max-file" = "3"
+              "max-size" = "10m"
+            }
+          }
+          port_mappings = [
+            {
+              container_port = 8080
+              host_port      = 80
+              protocol       = "tcp"
+            },
+            {
+              container_port = 8081
+              host_port      = 443
+              protocol       = "udp"
+            },
+          ]
+          extra_hosts = [
+            {
+              hostname   = "app.local"
+              ip_address = "127.0.0.1"
+            },
+          ]
+          mount_points              = []
+          volumes_from              = []
+          privileged                = false
+          read_only_root_filesystem = false
+        }
+      ])
+  }]
+  task_permissions_config = var.task_permissions_config
+}
+
+module "ecs_task_simple_with_passed_policies" {
+  for_each   = var.scenario_simple_passed_roles ? { enabled = true } : {}
+  source     = "../../../modules/ecs-task"
+  is_enabled = var.is_enabled
+  aws_region = var.aws_region
+
+  task_config = [
+    {
+      name = "task1"
+      container_definition_from_json = jsonencode([
+        {
+          name               = "app"
+          image              = "cloudposse/geodesic"
+          essential          = true
+          interactive        = true
+          pseudo_terminal    = true
+          cpu                = 256
+          memory             = 256
+          memory_reservation = 128
+          log_configuration = {
+            log_driver = "json-file"
+            options = {
+              "max-file" = "3"
+              "max-size" = "10m"
+            }
+          }
+          port_mappings = [
+            {
+              container_port = 8080
+              host_port      = 80
+              protocol       = "tcp"
+            },
+            {
+              container_port = 8081
+              host_port      = 443
+              protocol       = "udp"
+            },
+          ]
+          extra_hosts = [
+            {
+              hostname   = "app.local"
+              ip_address = "127.0.0.1"
+            },
+          ]
+          mount_points              = []
+          volumes_from              = []
+          privileged                = false
+          read_only_root_filesystem = false
+        }
+      ])
+  }]
+  task_permissions_config = [
+    {
+      name               = "task1"
+      task_role_arn      = aws_iam_role.task_role.arn
+      execution_role_arn = aws_iam_role.execution_role.arn
+    }
+  ]
+}
+
+
+
+module "ecs_task_multiple" {
+  for_each   = var.scenario_multiple ? { enabled = true } : {}
   source     = "../../../modules/ecs-task"
   is_enabled = var.is_enabled
   aws_region = var.aws_region
@@ -113,7 +230,7 @@ module "main_module" {
     {
       name = "task3"
       enable_extra_iam_policies_arn = [
-      aws_iam_policy.test_extra_iam_policy.arn]
+      aws_iam_policy.task_role_extra_iam_policy.arn]
       container_definition_from_json = jsonencode([
         {
           name               = "app"
@@ -155,32 +272,120 @@ module "main_module" {
           read_only_root_filesystem = false
         }
       ])
-    }
+    },
   ]
-
-  task_extra_iam_policies = [
+  task_permissions_config = [
     {
-      task_name  = "task3"
-      policy_arn = aws_iam_policy.test_extra_iam_policy.arn
+      name               = "task3"
+      task_role_arn      = aws_iam_role.task_role.arn
+      execution_role_arn = aws_iam_role.execution_role.arn
     }
   ]
 }
 
-
-resource "aws_iam_policy" "test_extra_iam_policy" {
-  name   = "test_extra_iam_policy"
-  policy = data.aws_iam_policy_document.test_extra_iam_policy_doc.json
+resource "aws_iam_role" "execution_role" {
+  name               = "task_role"
+  assume_role_policy = data.aws_iam_policy_document.execution_assume_policy.json
 }
 
-data "aws_iam_policy_document" "test_extra_iam_policy_doc" {
-  statement {
-    effect    = "Allow"
-    resources = ["*"]
 
+data "aws_iam_policy_document" "execution_assume_policy" {
+
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ecs.amazonaws.com"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "fargate_policy" {
+
+  statement {
+    sid    = "oooexeccommon"
+    effect = "Allow"
     actions = [
+      "elasticloadbalancing:Describe*",
+      "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+      "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
       "ec2:Describe*",
+      "ec2:AuthorizeSecurityGroupIngress",
+      "elasticloadbalancing:RegisterTargets",
+      "elasticloadbalancing:DeregisterTargets",
+      "logs:CreateLogStream",
+      "logs:CreateLogGroup",
+      "logs:PutLogEvents",
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:BatchGetImage",
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+      "kms:Decrypt",
+    ]
+    resources = [
+      "*"
     ]
   }
+}
+
+
+resource "aws_iam_policy" "execution_fargate_policy" {
+  name   = "execution_fargate_policy"
+  policy = data.aws_iam_policy_document.fargate_policy.json
+}
+
+resource "aws_iam_role_policy_attachment" "execution_fargate_policy_attachment" {
+  role       = aws_iam_role.execution_role.name
+  policy_arn = aws_iam_policy.execution_fargate_policy.arn
+}
+
+resource "aws_iam_role" "task_role" {
+  name               = "task_role_ecs_task_module"
+  assume_role_policy = data.aws_iam_policy_document.task_assume_policy.json
+}
+
+data "aws_iam_policy_document" "task_assume_policy" {
+
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_policy" "task_role_extra_iam_policy" {
+  name        = "test_extra_iam_policy"
+  description = "test_extra_iam_policy"
+  policy      = data.aws_iam_policy_document.test_extra_iam_policy.json
+}
+
+data "aws_iam_policy_document" "test_extra_iam_policy" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+      "s3:ListBucket",
+    ]
+    resources = [
+      "arn:aws:s3:::test-bucket",
+      "arn:aws:s3:::test-bucket/*",
+    ]
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "test_extra_iam_policy_attachment" {
+  role       = aws_iam_role.task_role.name
+  policy_arn = aws_iam_policy.task_role_extra_iam_policy.arn
 }
 ```
 
@@ -207,59 +412,53 @@ Custom outputs
 -------------------------------------
 */
 output "ecs_task_definition_arn" {
-  value       = [for t in aws_ecs_task_definition.this : t.arn]
+  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.arn] : [for t in aws_ecs_task_definition.built_in_permissions : t.arn]
   description = "The ARN of the task definition."
 }
 
 output "ecs_task_definition_family" {
-  value       = [for t in aws_ecs_task_definition.this : t.family]
+  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.family] : [for t in aws_ecs_task_definition.built_in_permissions : t.family]
   description = "The family of the task definition."
 }
 
 output "ecs_task_definition_revision" {
-  value       = [for t in aws_ecs_task_definition.this : t.revision]
+  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.revision] : [for t in aws_ecs_task_definition.built_in_permissions : t.revision]
   description = "The revision of the task definition."
 }
 
 output "ecs_task_definition_task_role_arn" {
-  value       = [for t in aws_ecs_task_definition.this : t.task_role_arn]
+  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.task_role_arn] : [for t in aws_ecs_task_definition.built_in_permissions : t.task_role_arn]
   description = "The ARN of the IAM role that grants containers in the task permission to call AWS APIs on your behalf."
 }
 
 output "ecs_task_definition_execution_role_arn" {
-  value       = [for t in aws_ecs_task_definition.this : t.execution_role_arn]
+  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.execution_role_arn] : [for t in aws_ecs_task_definition.built_in_permissions : t.execution_role_arn]
   description = "The ARN of the IAM role that grants the Amazon ECS container agent permission to make AWS API calls on your behalf."
 }
 
 output "ecs_task_definition_network_mode" {
-  value       = [for t in aws_ecs_task_definition.this : t.network_mode]
+  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.network_mode] : [for t in aws_ecs_task_definition.built_in_permissions : t.network_mode]
   description = "The network mode of the task definition."
 }
 
 output "ecs_task_definition_container_definitions" {
-  value       = [for t in aws_ecs_task_definition.this : t.container_definitions]
+  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.container_definitions] : [for t in aws_ecs_task_definition.built_in_permissions : t.container_definitions]
   description = "The container definitions of the task definition."
 }
 
 output "ecs_task_definition_cpu" {
-  value       = [for t in aws_ecs_task_definition.this : t.cpu]
+  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.cpu] : [for t in aws_ecs_task_definition.built_in_permissions : t.cpu]
   description = "The number of CPU units used by the task."
 }
 
 output "ecs_task_definition_memory" {
-  value       = [for t in aws_ecs_task_definition.this : t.memory]
+  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.memory] : [for t in aws_ecs_task_definition.built_in_permissions : t.memory]
   description = "The amount (in MiB) of memory used by the task."
 }
 
 output "ecs_task_definition_proxy_configuration" {
-  value       = [for t in aws_ecs_task_definition.this : t.proxy_configuration]
+  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.proxy_configuration] : [for t in aws_ecs_task_definition.built_in_permissions : t.proxy_configuration]
   description = "The proxy configuration of the task definition."
-}
-
-// FIXME: Fix this functionality later.
-output "is_extra_iam_policies_passed"{
-  value = local.extra_iam_policies
-  description = "Whether the extra IAM policies are passed or not."
 }
 ```
 ---
@@ -280,7 +479,18 @@ No modules.
 
 | Name | Type |
 |------|------|
+| [aws_ecs_task_definition.built_in_permissions](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
 | [aws_ecs_task_definition.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
+| [aws_iam_policy.execution_role_fargate_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.task_role_policy_fargate](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_role.execution_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role.task_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy_attachment.execution_role_fargate_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.task_role_policy_fargate_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_policy_document.execution_role_fargate_policy_doc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.execution_role_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.task_role_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.task_role_policy_fargate_doc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 ## Requirements
 
@@ -297,8 +507,8 @@ No modules.
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | AWS region to deploy the resources | `string` | n/a | yes |
 | <a name="input_is_enabled"></a> [is\_enabled](#input\_is\_enabled) | Whether this module will be created or not. It is useful, for stack-composite<br>modules that conditionally includes resources provided by this module.. | `bool` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all resources. | `map(string)` | `{}` | no |
-| <a name="input_task_config"></a> [task\_config](#input\_task\_config) | A list of objects that contains the configuration for each task definition.<br>The currently supported attributes are:<br>- name: The name of the task definition.<br>- family: The family of the task definition. If not provided, it'll use the name.<br>- container\_definition\_from\_json: The JSON string that contains the container definition.<br>- container\_definition\_from\_file: The path to the file that contains the container definition.<br>- type: The type of the task definition. Valid values are: EC2, FARGATE. Default: FARGATE.<br>- network\_mode: The network mode of the task definition. Valid values are: awsvpc, bridge, host, none. Default: awsvpc.<br>- cpu: The number of CPU units to reserve for the container. Default: 256.<br>- memory: The amount of memory (in MiB) to allow the container to use. Default: 512.<br>- task\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- execution\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- permissions\_boundary: The ARN of the policy that is used to set the permissions boundary for the task role. | <pre>list(object({<br>    // General settings<br>    name                           = string<br>    family                         = optional(string, null)<br>    container_definition_from_json = optional(string, null)<br>    container_definition_from_file = optional(string, null)<br>    type                           = optional(string, "FARGATE")<br>    network_mode                   = optional(string, null)<br>    // Capacity<br>    cpu    = optional(number, 256)<br>    memory = optional(number, 512)<br>    // Permissions<br>    task_role_arn              = optional(string, null) // If null, it'll create the IAM Role as part of this module.<br>    execution_role_arn        = optional(string, null) // If null, it'll create the IAM Role as part of this module.<br>    permissions_boundary       = optional(string, null)<br>    // proxy_configuration<br>    proxy_configuration = optional(object({<br>      type           = string<br>      container_name = string<br>      properties = optional(list(object({<br>        name  = string<br>        value = string<br>      })), [])<br>    }), null)<br>    // Ephemeral storage<br>    ephemeral_storage = optional(number, null)<br>  }))</pre> | `null` | no |
-| <a name="input_task_extra_iam_policies"></a> [task\_extra\_iam\_policies](#input\_task\_extra\_iam\_policies) | A list of objects that contains the configuration for each extra IAM policy.<br>The currently supported attributes are:<br>- task\_name: The name of the task definition.<br>- policy\_arn: The ARN of the policy.<br>- role\_name: The name of the role to attach the policy to. If not provided, it'll use the task role. | <pre>list(object({<br>    task_name  = string<br>    policy_arn = string<br>    role_name  = optional(string, null)<br>  }))</pre> | `null` | no |
+| <a name="input_task_config"></a> [task\_config](#input\_task\_config) | A list of objects that contains the configuration for each task definition.<br>The currently supported attributes are:<br>- name: The name of the task definition.<br>- family: The family of the task definition. If not provided, it'll use the name.<br>- container\_definition\_from\_json: The JSON string that contains the container definition.<br>- container\_definition\_from\_file: The path to the file that contains the container definition.<br>- type: The type of the task definition. Valid values are: EC2, FARGATE. Default: FARGATE.<br>- network\_mode: The network mode of the task definition. Valid values are: awsvpc, bridge, host, none. Default: awsvpc.<br>- cpu: The number of CPU units to reserve for the container. Default: 256.<br>- memory: The amount of memory (in MiB) to allow the container to use. Default: 512.<br>- task\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- execution\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- permissions\_boundary: The ARN of the policy that is used to set the permissions boundary for the task role. | <pre>list(object({<br>    // General settings<br>    name                           = string<br>    family                         = optional(string, null)<br>    container_definition_from_json = optional(string, null)<br>    container_definition_from_file = optional(string, null)<br>    type                           = optional(string, "FARGATE")<br>    network_mode                   = optional(string, "awsvpc")<br>    // Capacity<br>    cpu    = optional(number, 256)<br>    memory = optional(number, 512)<br>    // proxy_configuration<br>    proxy_configuration = optional(object({<br>      type           = string<br>      container_name = string<br>      properties = optional(list(object({<br>        name  = string<br>        value = string<br>      })), [])<br>    }), null)<br>    // Ephemeral storage<br>    ephemeral_storage = optional(number, null)<br>    task_placement_constraints = optional(list(object({<br>      type       = string<br>      expression = string<br>    })), [])<br>    service_placement_constraints = optional(list(object({<br>      type       = string<br>      expression = string<br>    })), [])<br>    runtime_platforms = optional(list(map(string)), [])<br>  }))</pre> | `null` | no |
+| <a name="input_task_permissions_config"></a> [task\_permissions\_config](#input\_task\_permissions\_config) | A list of objects that contains the configuration for each task permissions.<br>The currently supported attributes are:<br>- name: The name of the task definition.<br>- task\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- execution\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- permissions\_boundary: The ARN of the policy that is used to set the permissions boundary for the task role. | <pre>list(object({<br>    name                 = string<br>    task_role_arn        = string<br>    execution_role_arn   = string<br>    permissions_boundary = optional(string, null)<br>  }))</pre> | `null` | no |
 
 ## Outputs
 
@@ -316,6 +526,5 @@ No modules.
 | <a name="output_ecs_task_definition_revision"></a> [ecs\_task\_definition\_revision](#output\_ecs\_task\_definition\_revision) | The revision of the task definition. |
 | <a name="output_ecs_task_definition_task_role_arn"></a> [ecs\_task\_definition\_task\_role\_arn](#output\_ecs\_task\_definition\_task\_role\_arn) | The ARN of the IAM role that grants containers in the task permission to call AWS APIs on your behalf. |
 | <a name="output_is_enabled"></a> [is\_enabled](#output\_is\_enabled) | Whether the module is enabled or not. |
-| <a name="output_is_extra_iam_policies_passed"></a> [is\_extra\_iam\_policies\_passed](#output\_is\_extra\_iam\_policies\_passed) | Whether the extra IAM policies are passed or not. |
 | <a name="output_tags_set"></a> [tags\_set](#output\_tags\_set) | The tags set for the module. |
 <!-- END_TF_DOCS -->

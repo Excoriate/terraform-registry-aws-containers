@@ -1,8 +1,7 @@
 locals {
-  aws_region_to_deploy                       = var.aws_region
-  is_enabled                                 = !var.is_enabled ? false : var.task_config == null ? false : length(var.task_config) > 0 ? true : false
-  is_task_permissions_set                    = !local.is_enabled ? false : var.task_permissions_config == null ? false : length(var.task_permissions_config) > 0 ? true : false
-  is_task_permissions_built_in_to_be_created = local.is_task_permissions_set ? false : true
+  aws_region_to_deploy    = var.aws_region
+  is_enabled              = !var.is_enabled ? false : var.task_config == null ? false : length(var.task_config) > 0 ? true : false
+  is_task_permissions_set = !local.is_enabled ? false : var.task_permissions_config == null ? false : length(var.task_permissions_config) > 0
 
   /*
     * Task configuration:
@@ -58,6 +57,12 @@ locals {
       // feature flags
       is_container_definition_from_file_enabled = t["container_definition_from_file"] != null && t["container_definition_from_json"] == null
       is_runtime_platforms_option_enabled       = t["runtime_platforms"] == null ? false : length(t["runtime_platforms"]) > 0
+      /*
+         - As soon as the task_permissions_config variable is set, it'll require the user to pass the 'task_role_arn' and 'execution_role_arn' for each task.
+         - If the 'name' is present, it's set. Therefore, the built-in roles won't be created
+      */
+      is_task_role_passed_by_user      = length([for permissions in local.task_permissions_set_by_user_normalised : permissions if permissions["name"] == t["name"]]) == 0 ? false : true
+      is_execution_role_passed_by_user = length([for permissions in local.task_permissions_set_by_user_normalised : permissions if permissions["name"] == t["name"]]) == 0 ? false : true
     }
   ]
 
@@ -73,13 +78,9 @@ locals {
   task_permissions_set_by_user_normalised = !local.is_task_permissions_set ? [] : [
     for task_permission in var.task_permissions_config : {
       name                 = lower(trimspace(task_permission.name))
-      task_role_arn        = task_permission["task_role_arn"] == null ? null : trimspace(task_permission["task_role_arn"])
-      execution_role_arn   = task_permission["execution_role_arn"] == null ? null : trimspace(task_permission["execution_role_arn"])
+      task_role_arn        = trimspace(task_permission["task_role_arn"])
+      execution_role_arn   = trimspace(task_permission["execution_role_arn"])
       permissions_boundary = task_permission["permissions_boundary"] == null ? null : trimspace(task_permission["permissions_boundary"])
-
-      // feature_flags
-      is_task_role_to_be_created      = task_permission["task_role_arn"] == null ? true : false
-      is_execution_role_to_be_created = task_permission["execution_role_arn"] == null ? true : false
     }
   ]
 
@@ -93,25 +94,25 @@ locals {
      - A new ECS task role is going to be created.
      - A new ECS execution role is going to be created.
   */
-  task_role_built_in_create_normalised = !local.is_task_permissions_built_in_to_be_created ? [] : [
+  task_role_built_in_create_normalised = !local.is_enabled ? [] : [
     for task in local.task_config_normalized : {
       name                       = trimspace(lower(task["name"]))
       is_task_role_to_be_created = true
     }
   ]
 
-  execution_role_built_in_create_normalised = !local.is_task_permissions_built_in_to_be_created ? [] : [
+  execution_role_built_in_create_normalised = !local.is_enabled ? [] : [
     for task in local.task_config_normalized : {
       name                            = trimspace(lower(task["name"]))
       is_execution_role_to_be_created = true
     }
   ]
 
-  task_role_built_in_create = !local.is_task_permissions_built_in_to_be_created ? {} : {
+  task_role_built_in_create = !local.is_enabled ? {} : {
     for permission in local.task_role_built_in_create_normalised : permission["name"] => permission
   }
 
-  execution_role_built_in_create = !local.is_task_permissions_built_in_to_be_created ? {} : {
+  execution_role_built_in_create = !local.is_enabled ? {} : {
     for permission in local.execution_role_built_in_create_normalised : permission["name"] => permission
   }
 }
