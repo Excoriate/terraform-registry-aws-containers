@@ -52,8 +52,8 @@ resource "aws_ecs_task_definition" "built_in_permissions" {
   cpu                      = each.value["cpu"]
   memory                   = each.value["memory"]
   network_mode             = each.value["network_mode"]
-  execution_role_arn       = aws_iam_role.execution_role[each.key].arn
-  task_role_arn            = aws_iam_role.execution_role[each.key].arn
+  execution_role_arn       = each.value["disable_built_in_permissions"] ? null : aws_iam_role.execution_role[each.key].arn
+  task_role_arn            = each.value["disable_built_in_permissions"] ? null : aws_iam_role.execution_role[each.key].arn
 
   tags = var.tags
 

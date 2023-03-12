@@ -75,10 +75,11 @@ The currently supported attributes are:
 
 variable "task_permissions_config" {
   type = list(object({
-    name                 = string
-    task_role_arn        = string
-    execution_role_arn   = string
-    permissions_boundary = optional(string, null)
+    name                         = string
+    task_role_arn                = optional(string, null)
+    execution_role_arn           = optional(string, null)
+    permissions_boundary         = optional(string, null)
+    disable_built_in_permissions = optional(bool, false)
   }))
   default     = null
   description = <<EOF

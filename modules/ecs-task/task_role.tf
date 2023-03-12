@@ -5,14 +5,14 @@
   ==================================
 */
 resource "aws_iam_role" "task_role" {
-  for_each           = local.task_role_built_in_create
+  for_each           = { for k, v in local.task_role_built_in_create : k => v if v["create"] }
   name               = format("%s-%s", each.value["name"], "task-exec-role")
   assume_role_policy = join("", [for doc in [data.aws_iam_policy_document.task_role_policy[each.key]] : doc.json])
   tags               = var.tags
 }
 
 data "aws_iam_policy_document" "task_role_policy" {
-  for_each = local.task_role_built_in_create
+  for_each = { for k, v in local.task_role_built_in_create : k => v if v["create"] }
 
   statement {
     effect  = "Allow"
@@ -26,7 +26,7 @@ data "aws_iam_policy_document" "task_role_policy" {
 }
 
 data "aws_iam_policy_document" "task_role_policy_fargate_doc" {
-  for_each = local.task_role_built_in_create
+  for_each = { for k, v in local.task_role_built_in_create : k => v if v["create"] }
 
   statement {
     sid    = "taskpolfargate1"
@@ -82,14 +82,14 @@ data "aws_iam_policy_document" "task_role_policy_fargate_doc" {
 
 
 resource "aws_iam_policy" "task_role_policy_fargate" {
-  for_each = local.task_role_built_in_create
+  for_each = { for k, v in local.task_role_built_in_create : k => v if v["create"] }
 
   name   = format("%s-%s", each.value["name"], "task-exec-policy")
   policy = join("", [for doc in [data.aws_iam_policy_document.task_role_policy_fargate_doc[each.key]] : doc.json])
 }
 
 resource "aws_iam_role_policy_attachment" "task_role_policy_fargate_attachment" {
-  for_each = local.task_role_built_in_create
+  for_each = { for k, v in local.task_role_built_in_create : k => v if v["create"] }
 
   role       = aws_iam_role.task_role[each.key].id
   policy_arn = join("", [for pol_arn in [aws_iam_policy.task_role_policy_fargate[each.key]] : pol_arn.arn])

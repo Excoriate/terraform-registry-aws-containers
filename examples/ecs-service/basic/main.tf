@@ -50,6 +50,12 @@ module "task" {
       ])
     },
   ]
+  task_permissions_config = [
+    {
+      name                         = "task1"
+      disable_built_in_permissions = true
+    }
+  ]
 }
 
 
@@ -82,17 +88,17 @@ module "main_module" {
       task_definition = module.task.ecs_task_definition_arn[0]
     },
     {
-      cluster         = "tsn-sandbox-us-east-1-users-workload-users-ecs-fargate"
-      name            = "service2"
-      task_definition = module.task.ecs_task_definition_arn[0]
-      enable_ignore_changes_on_desired_count = true
+      cluster                                  = "tsn-sandbox-us-east-1-users-workload-users-ecs-fargate"
+      name                                     = "service2"
+      task_definition                          = module.task.ecs_task_definition_arn[0]
+      enable_ignore_changes_on_desired_count   = true
       enable_ignore_changes_on_task_definition = false
     },
     {
-      cluster         = "tsn-sandbox-us-east-1-users-workload-users-ecs-fargate"
-      name            = "service3"
-      task_definition = module.task.ecs_task_definition_arn[0]
-      enable_ignore_changes_on_desired_count = true
+      cluster                                  = "tsn-sandbox-us-east-1-users-workload-users-ecs-fargate"
+      name                                     = "service3"
+      task_definition                          = module.task.ecs_task_definition_arn[0]
+      enable_ignore_changes_on_desired_count   = true
       enable_ignore_changes_on_task_definition = true
     }
   ]
