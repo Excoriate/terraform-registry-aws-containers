@@ -1,6 +1,8 @@
 locals {
-  aws_region_to_deploy = var.aws_region
-  is_enabled           = !var.is_enabled ? false : var.task_config == null ? false : length(var.task_config) > 0 ? true : false
+  aws_region_to_deploy                       = var.aws_region
+  is_enabled                                 = !var.is_enabled ? false : var.task_config == null ? false : length(var.task_config) > 0 ? true : false
+  is_task_permissions_set                    = !local.is_enabled ? false : var.task_permissions_config == null ? false : length(var.task_permissions_config) > 0 ? true : false
+  is_task_permissions_built_in_to_be_created = local.is_task_permissions_set ? false : true
 
   /*
     * Task configuration:
@@ -16,17 +18,9 @@ locals {
       container_definition_from_json = t["container_definition_from_json"] == null ? "" : t["container_definition_from_json"]
       container_definition_from_file = t["container_definition_from_file"] == null ? "" : t["container_definition_from_file"]
       requires_compatibilities       = [t["type"]] // It defaults to 'Fargate' if not set.
-      network_mode                   = t["network_mode"] == null ? null : t["network_mode"]
+      network_mode                   = t["network_mode"] == null ? "awsvpc" : t["network_mode"]
       cpu                            = t["cpu"] == null ? 256 : t["cpu"]
       memory                         = t["memory"] == null ? 512 : t["memory"]
-      // Task role ARN
-      task_role_arn        = t["task_role_arn"] == null ? null : trimspace(t["task_role_arn"])
-      execution_role_arn   = t["execution_role_arn"] == null ? null : trimspace(t["execution_role_arn"])
-      permissions_boundary = t["permissions_boundary"] == null ? null : trimspace(t["permissions_boundary"])
-
-      // feature flags
-      is_default_task_role_to_be_created        = t["task_role_arn"] == null
-      is_container_definition_from_file_enabled = t["container_definition_from_file"] != null && t["container_definition_from_json"] == null
 
       proxy_configuration = t["proxy_configuration"] == null ? {} : {
         type           = t["proxy_configuration"]["type"] == null ? "APPMESH" : t["proxy_configuration"]["type"]
@@ -42,22 +36,82 @@ locals {
       ephemeral_storage = t["ephemeral_storage"] == null ? {} : {
         size_in_gib = t["ephemeral_storage"]
       }
+
+      task_placement_constraints = t["task_placement_constraints"] == null ? [] : [
+        for c in t["task_placement_constraints"] : {
+          type       = trimspace(c["type"])
+          expression = trimspace(c["expression"])
+        }
+      ]
+
+      service_placement_constraints = t["service_placement_constraints"] == null ? [] : [
+        for c in t["service_placement_constraints"] : {
+          type       = trimspace(c["type"])
+          expression = trimspace(c["expression"])
+        }
+      ]
+
+      runtime_platform = t["runtime_platforms"] == null ? [] : [
+        for p in t["runtime_platforms"] : trimspace(p)
+      ]
+
+      // feature flags
+      is_container_definition_from_file_enabled = t["container_definition_from_file"] != null && t["container_definition_from_json"] == null
+      is_runtime_platforms_option_enabled       = t["runtime_platforms"] == null ? false : length(t["runtime_platforms"]) > 0
     }
   ]
 
-  task_config_to_create = !local.is_enabled ? {} : {
+  task_config_create = !local.is_enabled ? {} : {
     for t in local.task_config_normalized : t["name"] => t
   }
 
   /*
-   IAM extra policies that can be optionally attached to the ECS task role.
+    * Task permissions configuration:
+     - These permissions are passed by the user.
+     - They are just normalised, and passed to the main ecs task resource.
   */
-  is_extra_iam_policies_enabled = !local.is_enabled ? false : var.task_extra_iam_policies == null ? false : length(var.task_extra_iam_policies) > 0
-  extra_iam_policies = !local.is_extra_iam_policies_enabled ? [] : [
-    for p in var.task_extra_iam_policies : {
-      task_name  = lower(trimspace(p["task_name"]))
-      policy_arn = trimspace(p["policy_arn"])
-      role_name  = p["role_name"] == null ? "USER-DEFAULT" : trimspace(p["role_name"])
+  task_permissions_set_by_user_normalised = !local.is_task_permissions_set ? [] : [
+    for task_permission in var.task_permissions_config : {
+      name                 = lower(trimspace(task_permission.name))
+      task_role_arn        = task_permission["task_role_arn"] == null ? null : trimspace(task_permission["task_role_arn"])
+      execution_role_arn   = task_permission["execution_role_arn"] == null ? null : trimspace(task_permission["execution_role_arn"])
+      permissions_boundary = task_permission["permissions_boundary"] == null ? null : trimspace(task_permission["permissions_boundary"])
+
+      // feature_flags
+      is_task_role_to_be_created      = task_permission["task_role_arn"] == null ? true : false
+      is_execution_role_to_be_created = task_permission["execution_role_arn"] == null ? true : false
     }
   ]
+
+  task_permissions_set_by_user_create = !local.is_task_permissions_set ? {} : {
+    for task_permission in local.task_permissions_set_by_user_normalised : task_permission["name"] => task_permission
+  }
+
+  /*
+    * Task permissions configuration:
+     - These permissions are resolved internally. If they aren't passed, they are created by this module.
+     - A new ECS task role is going to be created.
+     - A new ECS execution role is going to be created.
+  */
+  task_role_built_in_create_normalised = !local.is_task_permissions_built_in_to_be_created ? [] : [
+    for task in local.task_config_normalized : {
+      name                       = trimspace(lower(task["name"]))
+      is_task_role_to_be_created = true
+    }
+  ]
+
+  execution_role_built_in_create_normalised = !local.is_task_permissions_built_in_to_be_created ? [] : [
+    for task in local.task_config_normalized : {
+      name                            = trimspace(lower(task["name"]))
+      is_execution_role_to_be_created = true
+    }
+  ]
+
+  task_role_built_in_create = !local.is_task_permissions_built_in_to_be_created ? {} : {
+    for permission in local.task_role_built_in_create_normalised : permission["name"] => permission
+  }
+
+  execution_role_built_in_create = !local.is_task_permissions_built_in_to_be_created ? {} : {
+    for permission in local.execution_role_built_in_create_normalised : permission["name"] => permission
+  }
 }

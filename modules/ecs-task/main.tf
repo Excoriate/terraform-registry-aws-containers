@@ -1,13 +1,13 @@
 resource "aws_ecs_task_definition" "this" {
-  for_each                 = local.task_config_to_create
+  for_each                 = local.task_config_create
   family                   = each.value["family"]
   requires_compatibilities = each.value["requires_compatibilities"]
   container_definitions    = each.value["is_container_definition_from_file_enabled"] ? file(each.value["container_definition_from_file"]) : each.value["container_definition_from_json"] == null ? "" : each.value["container_definition_from_json"]
   cpu                      = each.value["cpu"]
   memory                   = each.value["memory"]
   network_mode             = each.value["network_mode"]
-  task_role_arn            = each.value["task_role_arn"]
-  execution_role_arn       = each.value["execution_role_arn"]
+  execution_role_arn       = local.is_task_permissions_set ? lookup({ for k, v in local.task_permissions_set_by_user_create : k => v["execution_role_arn"] if v["name"] == each.key }) : aws_iam_role.this[each.key].arn
+  task_role_arn            = local.is_task_permissions_set ? lookup({ for k, v in local.task_permissions_set_by_user_create : k => v["task_role_arn"] if v["name"] == each.key }) : aws_iam_role.this[each.key].arn
 
   tags = var.tags
 

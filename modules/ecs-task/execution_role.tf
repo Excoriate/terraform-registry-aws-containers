@@ -5,15 +5,14 @@
   ==================================
 */
 resource "aws_iam_role" "this" {
-  for_each             = local.ecs_permissions_create
-  name                 = format("%s-%s", each.value["name"], "ecs-exec-role")
-  assume_role_policy   = join("", [for doc in [data.aws_iam_policy_document.this[each.key]] : doc.json])
-  permissions_boundary = each.value["permissions_boundary"]
-  tags                 = var.tags
+  for_each           = local.execution_role_built_in_create
+  name               = format("%s-%s", each.value["name"], "ecs-exec-role")
+  assume_role_policy = join("", [for doc in [data.aws_iam_policy_document.this[each.key]] : doc.json])
+  tags               = var.tags
 }
 
 data "aws_iam_policy_document" "this" {
-  for_each = local.ecs_permissions_create
+  for_each = local.execution_role_built_in_create
 
   statement {
     effect  = "Allow"
@@ -27,7 +26,7 @@ data "aws_iam_policy_document" "this" {
 }
 
 data "aws_iam_policy_document" "fargate_policy" {
-  for_each = local.ecs_permissions_create
+  for_each = local.execution_role_built_in_create
 
   statement {
     sid    = "oooexeccommon"
@@ -59,14 +58,14 @@ data "aws_iam_policy_document" "fargate_policy" {
 
 
 resource "aws_iam_policy" "fargate" {
-  for_each = local.ecs_permissions_create
+  for_each = local.execution_role_built_in_create
 
   name   = format("%s-%s", each.value["name"], "ecs-exec-policy")
   policy = join("", [for doc in [data.aws_iam_policy_document.fargate_policy[each.key]] : doc.json])
 }
 
 resource "aws_iam_role_policy_attachment" "this" {
-  for_each = local.ecs_permissions_create
+  for_each = local.execution_role_built_in_create
 
   role       = aws_iam_role.this[each.key].id
   policy_arn = join("", [for pol_arn in [aws_iam_policy.fargate[each.key]] : pol_arn.arn])

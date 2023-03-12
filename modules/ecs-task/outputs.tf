@@ -67,9 +67,3 @@ output "ecs_task_definition_proxy_configuration" {
   value       = [for t in aws_ecs_task_definition.this : t.proxy_configuration]
   description = "The proxy configuration of the task definition."
 }
-
-// FIXME: Fix this functionality later.
-output "is_extra_iam_policies_passed" {
-  value       = local.extra_iam_policies
-  description = "Whether the extra IAM policies are passed or not."
-}
