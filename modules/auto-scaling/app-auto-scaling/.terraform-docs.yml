@@ -21,11 +21,11 @@ content: |-
     {{ include "../../../examples/auto-scaling/app-auto-scaling/basic/main.tf" }}
     ```
     ```hcl
-    {{ include "../../../examples/auto-scaling/app-auto-scaling/basic/config/fixtures-multiple.tfvars" }}
+    {{ include "../../../examples/auto-scaling/app-auto-scaling/basic/config/fixtures.tfvars" }}
     ```
 
     ```hcl
-    {{ include "../../../examples/auto-scaling/app-auto-scaling/basic/config/fixtures-with-ecs-config.tfvars" }}
+    {{ include "../../../examples/auto-scaling/app-auto-scaling/basic/config/fixtures-multiple.tfvars" }}
     ```
 
     For module composition, It's recommended to take a look at the module's `outputs` to understand what's available:

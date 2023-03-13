@@ -20,8 +20,12 @@ data "aws_iam_policy_document" "execution_role_ooo_assume_role" {
     actions = ["sts:AssumeRole"]
 
     principals {
+      // FIXME: This should be 'ecs-service' when the 'iam-role' is enabled in the ecs-service.
+      #      type        = "Service"
+      #      identifiers = ["ecs.amazonaws.com"]
       type        = "Service"
-      identifiers = ["ecs.amazonaws.com"]
+      identifiers = ["ecs-tasks.amazonaws.com"]
+
     }
   }
 }
@@ -106,9 +110,13 @@ data "aws_iam_policy_document" "execution_role_custom_assume_role" {
     actions = ["sts:AssumeRole"]
 
     principals {
+      // FIXME: This should be 'ecs-service' when the 'iam-role' is enabled in the ecs-service.
+      #      type        = "Service"
+      #      identifiers = ["ecs.amazonaws.com"]
       type        = "Service"
-      identifiers = ["ecs.amazonaws.com"]
+      identifiers = ["ecs-tasks.amazonaws.com"]
     }
+
   }
 }
 

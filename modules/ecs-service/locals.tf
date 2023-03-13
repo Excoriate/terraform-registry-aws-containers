@@ -22,7 +22,7 @@ locals {
       deployment_minimum_healthy_percent = t["deployment_minimum_healthy_percent"] == null ? 100 : t["deployment_minimum_healthy_percent"]
       health_check_grace_period_seconds  = t["health_check_grace_period_seconds"] == null ? null : t["health_check_grace_period_seconds"]
       launch_type                        = t["launch_type"] == null ? "FARGATE" : upper(trimspace(t["launch_type"]))
-      platform_version                   = t["platform_version"] == null ? "LATEST" : lower(trimspace(t["platform_version"]))
+      platform_version                   = t["platform_version"] == null ? "LATEST" : trimspace(t["platform_version"])
       scheduling_strategy                = t["scheduling_strategy"] == null ? "REPLICA" : upper(trimspace(t["scheduling_strategy"]))
       enable_ecs_managed_tags            = t["enable_ecs_managed_tags"] == null ? false : t["enable_ecs_managed_tags"]
       wait_for_steady_state              = t["wait_for_steady_state"] == null ? true : t["wait_for_steady_state"]

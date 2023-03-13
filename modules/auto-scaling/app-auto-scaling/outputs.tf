@@ -24,26 +24,26 @@ output "aws_region_for_deploy" {
 }
 
 output "app_autoscaling_ecs_id" {
-  value       = [for ac in aws_appautoscaling_target.ecs_target : ac.id]
+  value       = [for ac in aws_appautoscaling_target.this : ac.id]
   description = "The ID of the application autoscaling target for ECS."
 }
 
 output "app_autoscaling_ecs_role_arn" {
-  value       = [for ac in aws_appautoscaling_target.ecs_target : ac.role_arn]
+  value       = [for ac in aws_appautoscaling_target.this : ac.role_arn]
   description = "The ARN of the application autoscaling target for ECS."
 }
 
 output "app_autoscaling_ecs_min_capacity" {
-  value       = [for ac in aws_appautoscaling_target.ecs_target : ac.min_capacity]
+  value       = [for ac in aws_appautoscaling_target.this : ac.min_capacity]
   description = "The minimum capacity of the application autoscaling target for ECS."
 }
 
 output "app_autoscaling_ecs_max_capacity" {
-  value       = [for ac in aws_appautoscaling_target.ecs_target : ac.max_capacity]
+  value       = [for ac in aws_appautoscaling_target.this : ac.max_capacity]
   description = "The maximum capacity of the application autoscaling target for ECS."
 }
 
 output "app_autoscaling_ecs_resource_id" {
-  value       = [for ac in aws_appautoscaling_target.ecs_target : ac.resource_id]
+  value       = [for ac in aws_appautoscaling_target.this : ac.resource_id]
   description = "The resource ID of the application autoscaling target for ECS."
 }

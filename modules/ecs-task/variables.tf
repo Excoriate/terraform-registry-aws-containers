@@ -48,12 +48,12 @@ variable "task_config" {
     task_placement_constraints = optional(list(object({
       type       = string
       expression = string
-    })), [])
+    })), null)
     service_placement_constraints = optional(list(object({
       type       = string
       expression = string
-    })), [])
-    runtime_platforms = optional(list(map(string)), [])
+    })), null)
+    runtime_platforms = optional(list(map(string)), null)
   }))
   default     = null
   description = <<EOF
