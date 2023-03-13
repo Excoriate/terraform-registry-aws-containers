@@ -24,7 +24,8 @@ resource "aws_ecs_service" "this" {
   propagate_tags                     = each.value["propagate_tags"]
 
   dynamic "load_balancer" {
-    for_each = !each.value["is_load_balancers_enabled"] ? [] : [each.value["load_balancer_config"]]
+    for_each = !each.value["is_load_balancers_enabled"] ? {} : { for k, v in each.value["load_balancers_config"] : k => v }
+
     content {
       target_group_arn = load_balancer.value["target_group_arn"]
       container_name   = load_balancer.value["container_name"]
@@ -72,7 +73,7 @@ resource "aws_ecs_service" "ignore_task_definition_changes" {
   propagate_tags                     = each.value["propagate_tags"]
 
   dynamic "load_balancer" {
-    for_each = !each.value["is_load_balancers_enabled"] ? [] : [each.value["load_balancer_config"]]
+    for_each = !each.value["is_load_balancers_enabled"] ? {} : { for k, v in each.value["load_balancers_config"] : k => v }
     content {
       target_group_arn = load_balancer.value["target_group_arn"]
       container_name   = load_balancer.value["container_name"]
@@ -126,7 +127,8 @@ resource "aws_ecs_service" "ignore_desired_count_changes" {
   propagate_tags                     = each.value["propagate_tags"]
 
   dynamic "load_balancer" {
-    for_each = !each.value["is_load_balancers_enabled"] ? [] : [each.value["load_balancer_config"]]
+    for_each = !each.value["is_load_balancers_enabled"] ? {} : { for k, v in each.value["load_balancers_config"] : k => v }
+
     content {
       target_group_arn = load_balancer.value["target_group_arn"]
       container_name   = load_balancer.value["container_name"]
@@ -180,7 +182,8 @@ resource "aws_ecs_service" "ignore_desired_count_and_task_definition_changes" {
   propagate_tags                     = each.value["propagate_tags"]
 
   dynamic "load_balancer" {
-    for_each = !each.value["is_load_balancers_enabled"] ? [] : each.value["load_balancer_config"]
+    for_each = !each.value["is_load_balancers_enabled"] ? {} : { for k, v in each.value["load_balancers_config"] : k => v }
+
     content {
       target_group_arn = load_balancer.value["target_group_arn"]
       container_name   = load_balancer.value["container_name"]

@@ -31,7 +31,7 @@ locals {
       cluster                            = t["cluster"]
       propagate_tags                     = t["propagate_tags"] == null ? "TASK_DEFINITION" : upper(trimspace(t["propagate_tags"]))
       enable_deployment_circuit_breaker  = t["enable_deployment_circuit_breaker"] == null ? false : t["enable_deployment_circuit_breaker"]
-      load_balancer_config = t["load_balancers_config"] == null ? null : [
+      load_balancers_config = t["load_balancers_config"] == null ? null : [
         for l in t["load_balancers_config"] : {
           target_group_arn = lower(trimspace(l["target_group_arn"]))
           container_name   = lower(trimspace(l["container_name"]))
@@ -40,7 +40,7 @@ locals {
       ]
 
       // feature flags.
-      is_load_balancers_enabled             = t["load_balancers_config"] == null ? false : length(t["load_balancers_config"]) > 0 ? true : false
+      is_load_balancers_enabled             = t["load_balancers_config"] == null ? false : length(t["load_balancers_config"]) > 0
       is_network_configuration_enabled      = t["network_config"] == null ? false : true
       is_network_awsvpc_enabled             = t["network_config"] == null ? false : t["network_config"]["mode"] == null ? false : lower(trimspace(t["network_config"]["mode"])) == "awsvpc" ? true : false
       is_deployment_circuit_breaker_enabled = t["enable_deployment_circuit_breaker"] == null ? false : t["enable_deployment_circuit_breaker"] ? true : false

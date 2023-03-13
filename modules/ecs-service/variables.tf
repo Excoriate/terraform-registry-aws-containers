@@ -70,7 +70,7 @@ variable "ecs_service_config" {
       target_group_arn = string
       container_name   = string
       container_port   = number
-    })), [])
+    })), null)
 
     // network configuration
     network_config = optional(object({

@@ -105,3 +105,25 @@ module "main_module" {
 
   ecs_service_permissions_config = var.ecs_service_permissions_config
 }
+
+
+module "main_module_ecs_with_load_balancer" {
+  source     = "../../../modules/ecs-service"
+  is_enabled = var.is_enabled
+  aws_region = var.aws_region
+
+  ecs_service_config = [
+    {
+      cluster         = "tsn-sandbox-us-east-1-users-workload-users-ecs-fargate"
+      name            = "servicewithlb"
+      task_definition = module.task.ecs_task_definition_arn[0]
+      load_balancers_config = [{
+        target_group_arn = "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"
+        container_name   = "app"
+        container_port   = 8080
+      }]
+    },
+  ]
+
+  ecs_service_permissions_config = var.ecs_service_permissions_config
+}
