@@ -63,14 +63,15 @@ module "ecs_task_simple_tf_unmanaged" {
       name = "task1"
       container_definition_from_json = jsonencode([
         {
-          name               = "app"
-          image              = "cloudposse/geodesic"
-          essential          = true
-          interactive        = true
-          pseudo_terminal    = true
-          cpu                = 256
-          memory             = 256
-          memory_reservation = 128
+          name                             = "app"
+          image                            = "cloudposse/geodesic"
+          essential                        = true
+          interactive                      = true
+          pseudo_terminal                  = true
+          cpu                              = 256
+          memory                           = 256
+          memory_reservation               = 128
+          manage_task_outside_of_terraform = true
           log_configuration = {
             log_driver = "json-file"
             options = {
@@ -102,7 +103,7 @@ module "ecs_task_simple_tf_unmanaged" {
           read_only_root_filesystem = false
         }
       ])
-    }]
+  }]
   task_permissions_config = var.task_permissions_config
 }
 

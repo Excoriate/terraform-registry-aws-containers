@@ -95,7 +95,7 @@ variable "scenario_multiple" {
   default = false
 }
 
-variable "scenario_tf_unmanaged"{
+variable "scenario_tf_unmanaged" {
   type    = bool
   default = false
 }

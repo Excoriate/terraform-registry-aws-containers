@@ -99,7 +99,7 @@ resource "aws_ecs_task_definition" "tf_unmanaged_built_in_permissions" {
 
 
 resource "aws_ecs_task_definition" "default" {
-  for_each                 = { for k, v in local.task_config_create : k => v if v["is_task_role_passed_by_user"] == true && v["is_execution_role_passed_by_user"] == true }
+  for_each                 = { for k, v in local.task_config_create : k => v if !v["manage_task_outside_of_terraform"] && v["is_task_role_passed_by_user"] == true && v["is_execution_role_passed_by_user"] == true }
   family                   = each.value["family"]
   requires_compatibilities = each.value["requires_compatibilities"]
   container_definitions    = each.value["is_container_definition_from_file_enabled"] ? file(each.value["container_definition_from_file"]) : each.value["container_definition_from_json"] == null ? "" : each.value["container_definition_from_json"]
@@ -145,7 +145,7 @@ resource "aws_ecs_task_definition" "default" {
 }
 
 resource "aws_ecs_task_definition" "default_built_in_permissions" {
-  for_each                 = { for k, v in local.task_config_create : k => v if v["is_task_role_passed_by_user"] == false && v["is_execution_role_passed_by_user"] == false }
+  for_each                 = { for k, v in local.task_config_create : k => v if !v["manage_task_outside_of_terraform"] && v["is_task_role_passed_by_user"] == false && v["is_execution_role_passed_by_user"] == false }
   family                   = each.value["family"]
   requires_compatibilities = each.value["requires_compatibilities"]
   container_definitions    = each.value["is_container_definition_from_file_enabled"] ? file(each.value["container_definition_from_file"]) : each.value["container_definition_from_json"] == null ? "" : each.value["container_definition_from_json"]
