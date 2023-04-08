@@ -192,7 +192,7 @@ resource "aws_ecs_service" "ignore_desired_count_and_task_definition_changes" {
   }
 
   dynamic "network_configuration" {
-    for_each = !each.value["is_network_configuration_enabled"] ? {} : each.value["network_configuration"]
+    for_each = !each.value["is_network_configuration_enabled"] ? [] : [each.value["network_configuration"]]
     content {
       subnets          = network_configuration.value["subnets"]
       security_groups  = network_configuration.value["security_groups"]
