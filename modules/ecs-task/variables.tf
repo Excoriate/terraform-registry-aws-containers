@@ -53,7 +53,8 @@ variable "task_config" {
       type       = string
       expression = string
     })), null)
-    runtime_platforms = optional(list(map(string)), null)
+    runtime_platforms                = optional(list(map(string)), null)
+    manage_task_outside_of_terraform = optional(bool, false)
   }))
   default     = null
   description = <<EOF
@@ -70,6 +71,7 @@ The currently supported attributes are:
 - task_role_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.
 - execution_role_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.
 - permissions_boundary: The ARN of the policy that is used to set the permissions boundary for the task role.
+- proxy_configuration: The proxy configuration details for the App Mesh proxy.
   EOF
 }
 

@@ -8,6 +8,12 @@ This module creates an ECS task definition with the specified name.
 
 This module pretends to be used as a safer way to create ECS task definitions, by using the `terraform` way to create them, and parsing the resulting object as a valid .json
 that can be used in an ECS service.
+The ecs task definitions that can be created, can also manage two particular attributes that are usually configured outside of
+terraform, these are:
+* `containerDefinitions` : This attributes list particular settings of the container that will be created, such as the image, the port mappings, the environment variables, etc.
+For more information, please refer to the [AWS documentation](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html).
+if the option `manage_task_outside_of_terraform` is set in the input variable `var.task_config`, then the container definitions will be managed outside of terraform,
+and the module will only create the task definition, but ignore any further changes to the container definitions.
 
 ---
 ## Example
@@ -67,6 +73,61 @@ module "ecs_task_simple" {
   }]
   task_permissions_config = var.task_permissions_config
 }
+
+module "ecs_task_simple_tf_unmanaged" {
+  for_each   = var.scenario_tf_unmanaged ? { enabled = true } : {}
+  source     = "../../../modules/ecs-task"
+  is_enabled = var.is_enabled
+  aws_region = var.aws_region
+
+  task_config = [
+    {
+      name = "task1"
+      container_definition_from_json = jsonencode([
+        {
+          name               = "app"
+          image              = "cloudposse/geodesic"
+          essential          = true
+          interactive        = true
+          pseudo_terminal    = true
+          cpu                = 256
+          memory             = 256
+          memory_reservation = 128
+          log_configuration = {
+            log_driver = "json-file"
+            options = {
+              "max-file" = "3"
+              "max-size" = "10m"
+            }
+          }
+          port_mappings = [
+            {
+              container_port = 8080
+              host_port      = 80
+              protocol       = "tcp"
+            },
+            {
+              container_port = 8081
+              host_port      = 443
+              protocol       = "udp"
+            },
+          ]
+          extra_hosts = [
+            {
+              hostname   = "app.local"
+              ip_address = "127.0.0.1"
+            },
+          ]
+          mount_points              = []
+          volumes_from              = []
+          privileged                = false
+          read_only_root_filesystem = false
+        }
+      ])
+    }]
+  task_permissions_config = var.task_permissions_config
+}
+
 
 module "ecs_task_simple_with_passed_policies" {
   for_each   = var.scenario_simple_passed_roles ? { enabled = true } : {}
@@ -412,52 +473,52 @@ Custom outputs
 -------------------------------------
 */
 output "ecs_task_definition_arn" {
-  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.arn] : [for t in aws_ecs_task_definition.built_in_permissions : t.arn]
+  value       = length([for t in aws_ecs_task_definition.default : t]) > 0 ? [for t in aws_ecs_task_definition.default : t.arn] : length([for t in aws_ecs_task_definition.default_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.default_built_in_permissions : t.arn] : length([for t in aws_ecs_task_definition.tg_unmanaged_default : t]) > 0 ? [for t in aws_ecs_task_definition.tg_unmanaged_default : t.arn] : length([for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t.arn] : []
   description = "The ARN of the task definition."
 }
 
 output "ecs_task_definition_family" {
-  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.family] : [for t in aws_ecs_task_definition.built_in_permissions : t.family]
+  value       = length([for t in aws_ecs_task_definition.default : t]) > 0 ? [for t in aws_ecs_task_definition.default : t.family] : length([for t in aws_ecs_task_definition.default_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.default_built_in_permissions : t.family] : length([for t in aws_ecs_task_definition.tg_unmanaged_default : t]) > 0 ? [for t in aws_ecs_task_definition.tg_unmanaged_default : t.family] : length([for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t.family] : []
   description = "The family of the task definition."
 }
 
 output "ecs_task_definition_revision" {
-  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.revision] : [for t in aws_ecs_task_definition.built_in_permissions : t.revision]
+  value       = length([for t in aws_ecs_task_definition.default : t]) > 0 ? [for t in aws_ecs_task_definition.default : t.revision] : length([for t in aws_ecs_task_definition.default_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.default_built_in_permissions : t.revision] : length([for t in aws_ecs_task_definition.tg_unmanaged_default : t]) > 0 ? [for t in aws_ecs_task_definition.tg_unmanaged_default : t.revision] : length([for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t.revision] : []
   description = "The revision of the task definition."
 }
 
 output "ecs_task_definition_task_role_arn" {
-  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.task_role_arn] : [for t in aws_ecs_task_definition.built_in_permissions : t.task_role_arn]
+  value       = length([for t in aws_ecs_task_definition.default : t]) > 0 ? [for t in aws_ecs_task_definition.default : t.task_role_arn] : length([for t in aws_ecs_task_definition.default_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.default_built_in_permissions : t.task_role_arn] : length([for t in aws_ecs_task_definition.tg_unmanaged_default : t]) > 0 ? [for t in aws_ecs_task_definition.tg_unmanaged_default : t.task_role_arn] : length([for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t.task_role_arn] : []
   description = "The ARN of the IAM role that grants containers in the task permission to call AWS APIs on your behalf."
 }
 
 output "ecs_task_definition_execution_role_arn" {
-  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.execution_role_arn] : [for t in aws_ecs_task_definition.built_in_permissions : t.execution_role_arn]
+  value       = length([for t in aws_ecs_task_definition.default : t]) > 0 ? [for t in aws_ecs_task_definition.default : t.execution_role_arn] : length([for t in aws_ecs_task_definition.default_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.default_built_in_permissions : t.execution_role_arn] : length([for t in aws_ecs_task_definition.tg_unmanaged_default : t]) > 0 ? [for t in aws_ecs_task_definition.tg_unmanaged_default : t.execution_role_arn] : length([for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t.execution_role_arn] : []
   description = "The ARN of the IAM role that grants the Amazon ECS container agent permission to make AWS API calls on your behalf."
 }
 
 output "ecs_task_definition_network_mode" {
-  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.network_mode] : [for t in aws_ecs_task_definition.built_in_permissions : t.network_mode]
+  value       = length([for t in aws_ecs_task_definition.default : t]) > 0 ? [for t in aws_ecs_task_definition.default : t.network_mode] : length([for t in aws_ecs_task_definition.default_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.default_built_in_permissions : t.network_mode] : length([for t in aws_ecs_task_definition.tg_unmanaged_default : t]) > 0 ? [for t in aws_ecs_task_definition.tg_unmanaged_default : t.network_mode] : length([for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t.network_mode] : []
   description = "The network mode of the task definition."
 }
 
 output "ecs_task_definition_container_definitions" {
-  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.container_definitions] : [for t in aws_ecs_task_definition.built_in_permissions : t.container_definitions]
+  value       = length([for t in aws_ecs_task_definition.default : t]) > 0 ? [for t in aws_ecs_task_definition.default : t.container_definitions] : length([for t in aws_ecs_task_definition.default_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.default_built_in_permissions : t.container_definitions] : length([for t in aws_ecs_task_definition.tg_unmanaged_default : t]) > 0 ? [for t in aws_ecs_task_definition.tg_unmanaged_default : t.container_definitions] : length([for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t.container_definitions] : []
   description = "The container definitions of the task definition."
 }
 
 output "ecs_task_definition_cpu" {
-  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.cpu] : [for t in aws_ecs_task_definition.built_in_permissions : t.cpu]
+  value       = length([for t in aws_ecs_task_definition.default : t]) > 0 ? [for t in aws_ecs_task_definition.default : t.cpu] : length([for t in aws_ecs_task_definition.default_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.default_built_in_permissions : t.cpu] : length([for t in aws_ecs_task_definition.tg_unmanaged_default : t]) > 0 ? [for t in aws_ecs_task_definition.tg_unmanaged_default : t.cpu] : length([for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t.cpu] : []
   description = "The number of CPU units used by the task."
 }
 
 output "ecs_task_definition_memory" {
-  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.memory] : [for t in aws_ecs_task_definition.built_in_permissions : t.memory]
+  value       = length([for t in aws_ecs_task_definition.default : t]) > 0 ? [for t in aws_ecs_task_definition.default : t.memory] : length([for t in aws_ecs_task_definition.default_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.default_built_in_permissions : t.memory] : length([for t in aws_ecs_task_definition.tg_unmanaged_default : t]) > 0 ? [for t in aws_ecs_task_definition.tg_unmanaged_default : t.memory] : length([for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t.memory] : []
   description = "The amount (in MiB) of memory used by the task."
 }
 
 output "ecs_task_definition_proxy_configuration" {
-  value       = length([for t in aws_ecs_task_definition.this : t]) > 0 ? [for t in aws_ecs_task_definition.this : t.proxy_configuration] : [for t in aws_ecs_task_definition.built_in_permissions : t.proxy_configuration]
+  value       = length([for t in aws_ecs_task_definition.default : t]) > 0 ? [for t in aws_ecs_task_definition.default : t.proxy_configuration] : length([for t in aws_ecs_task_definition.default_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.default_built_in_permissions : t.proxy_configuration] : length([for t in aws_ecs_task_definition.tg_unmanaged_default : t]) > 0 ? [for t in aws_ecs_task_definition.tg_unmanaged_default : t.proxy_configuration] : length([for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t]) > 0 ? [for t in aws_ecs_task_definition.tf_unmanaged_built_in_permissions : t.proxy_configuration] : []
   description = "The proxy configuration of the task definition."
 }
 ```
@@ -479,17 +540,19 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_ecs_task_definition.built_in_permissions](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
-| [aws_ecs_task_definition.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
+| [aws_ecs_task_definition.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
+| [aws_ecs_task_definition.default_built_in_permissions](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
+| [aws_ecs_task_definition.tf_unmanaged_built_in_permissions](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
+| [aws_ecs_task_definition.tg_unmanaged_default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
 | [aws_iam_policy.execution_role_fargate_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.task_role_policy_fargate](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_role.execution_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role.task_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role.task_role_built_in](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy_attachment.execution_role_fargate_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.task_role_policy_fargate_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_policy_document.execution_role_fargate_policy_doc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.execution_role_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.task_role_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.task_role_policy_built_in](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.task_role_policy_fargate_doc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 ## Requirements
@@ -507,8 +570,8 @@ No modules.
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | AWS region to deploy the resources | `string` | n/a | yes |
 | <a name="input_is_enabled"></a> [is\_enabled](#input\_is\_enabled) | Whether this module will be created or not. It is useful, for stack-composite<br>modules that conditionally includes resources provided by this module.. | `bool` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all resources. | `map(string)` | `{}` | no |
-| <a name="input_task_config"></a> [task\_config](#input\_task\_config) | A list of objects that contains the configuration for each task definition.<br>The currently supported attributes are:<br>- name: The name of the task definition.<br>- family: The family of the task definition. If not provided, it'll use the name.<br>- container\_definition\_from\_json: The JSON string that contains the container definition.<br>- container\_definition\_from\_file: The path to the file that contains the container definition.<br>- type: The type of the task definition. Valid values are: EC2, FARGATE. Default: FARGATE.<br>- network\_mode: The network mode of the task definition. Valid values are: awsvpc, bridge, host, none. Default: awsvpc.<br>- cpu: The number of CPU units to reserve for the container. Default: 256.<br>- memory: The amount of memory (in MiB) to allow the container to use. Default: 512.<br>- task\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- execution\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- permissions\_boundary: The ARN of the policy that is used to set the permissions boundary for the task role. | <pre>list(object({<br>    // General settings<br>    name                           = string<br>    family                         = optional(string, null)<br>    container_definition_from_json = optional(string, null)<br>    container_definition_from_file = optional(string, null)<br>    type                           = optional(string, "FARGATE")<br>    network_mode                   = optional(string, "awsvpc")<br>    // Capacity<br>    cpu    = optional(number, 256)<br>    memory = optional(number, 512)<br>    // proxy_configuration<br>    proxy_configuration = optional(object({<br>      type           = string<br>      container_name = string<br>      properties = optional(list(object({<br>        name  = string<br>        value = string<br>      })), [])<br>    }), null)<br>    // Ephemeral storage<br>    ephemeral_storage = optional(number, null)<br>    task_placement_constraints = optional(list(object({<br>      type       = string<br>      expression = string<br>    })), [])<br>    service_placement_constraints = optional(list(object({<br>      type       = string<br>      expression = string<br>    })), [])<br>    runtime_platforms = optional(list(map(string)), [])<br>  }))</pre> | `null` | no |
-| <a name="input_task_permissions_config"></a> [task\_permissions\_config](#input\_task\_permissions\_config) | A list of objects that contains the configuration for each task permissions.<br>The currently supported attributes are:<br>- name: The name of the task definition.<br>- task\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- execution\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- permissions\_boundary: The ARN of the policy that is used to set the permissions boundary for the task role. | <pre>list(object({<br>    name                 = string<br>    task_role_arn        = optional(string, null)<br>    execution_role_arn   = optional(string, null)<br>    permissions_boundary = optional(string, null)<br>    disable_built_in_permissions = optional(bool, false)<br>  }))</pre> | `null` | no |
+| <a name="input_task_config"></a> [task\_config](#input\_task\_config) | A list of objects that contains the configuration for each task definition.<br>The currently supported attributes are:<br>- name: The name of the task definition.<br>- family: The family of the task definition. If not provided, it'll use the name.<br>- container\_definition\_from\_json: The JSON string that contains the container definition.<br>- container\_definition\_from\_file: The path to the file that contains the container definition.<br>- type: The type of the task definition. Valid values are: EC2, FARGATE. Default: FARGATE.<br>- network\_mode: The network mode of the task definition. Valid values are: awsvpc, bridge, host, none. Default: awsvpc.<br>- cpu: The number of CPU units to reserve for the container. Default: 256.<br>- memory: The amount of memory (in MiB) to allow the container to use. Default: 512.<br>- task\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- execution\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- permissions\_boundary: The ARN of the policy that is used to set the permissions boundary for the task role.<br>- proxy\_configuration: The proxy configuration details for the App Mesh proxy. | <pre>list(object({<br>    // General settings<br>    name                           = string<br>    family                         = optional(string, null)<br>    container_definition_from_json = optional(string, null)<br>    container_definition_from_file = optional(string, null)<br>    type                           = optional(string, "FARGATE")<br>    network_mode                   = optional(string, "awsvpc")<br>    // Capacity<br>    cpu    = optional(number, 256)<br>    memory = optional(number, 512)<br>    // proxy_configuration<br>    proxy_configuration = optional(object({<br>      type           = string<br>      container_name = string<br>      properties = optional(list(object({<br>        name  = string<br>        value = string<br>      })), [])<br>    }), null)<br>    // Ephemeral storage<br>    ephemeral_storage = optional(number, null)<br>    task_placement_constraints = optional(list(object({<br>      type       = string<br>      expression = string<br>    })), null)<br>    service_placement_constraints = optional(list(object({<br>      type       = string<br>      expression = string<br>    })), null)<br>    runtime_platforms                = optional(list(map(string)), null)<br>    manage_task_outside_of_terraform = optional(bool, false)<br>  }))</pre> | `null` | no |
+| <a name="input_task_permissions_config"></a> [task\_permissions\_config](#input\_task\_permissions\_config) | A list of objects that contains the configuration for each task permissions.<br>The currently supported attributes are:<br>- name: The name of the task definition.<br>- task\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- execution\_role\_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.<br>- permissions\_boundary: The ARN of the policy that is used to set the permissions boundary for the task role. | <pre>list(object({<br>    name                         = string<br>    task_role_arn                = optional(string, null)<br>    execution_role_arn           = optional(string, null)<br>    permissions_boundary         = optional(string, null)<br>    disable_built_in_permissions = optional(bool, false)<br>  }))</pre> | `null` | no |
 
 ## Outputs
 

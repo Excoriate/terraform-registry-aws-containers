@@ -16,7 +16,7 @@ variable "task_config" {
     container_definition_from_json = optional(string, null)
     container_definition_from_file = optional(string, null)
     type                           = optional(string, "FARGATE")
-    network_mode                   = optional(string, null)
+    network_mode                   = optional(string, "awsvpc")
     // Capacity
     cpu    = optional(number, 256)
     memory = optional(number, 512)
@@ -34,12 +34,13 @@ variable "task_config" {
     task_placement_constraints = optional(list(object({
       type       = string
       expression = string
-    })), [])
+    })), null)
     service_placement_constraints = optional(list(object({
       type       = string
       expression = string
-    })), [])
-    runtime_platforms = optional(list(map(string)), [])
+    })), null)
+    runtime_platforms                = optional(list(map(string)), null)
+    manage_task_outside_of_terraform = optional(bool, false)
   }))
   default     = null
   description = <<EOF
@@ -56,6 +57,7 @@ The currently supported attributes are:
 - task_role_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.
 - execution_role_arn: The ARN of the IAM role that allows your Amazon ECS container task to make calls to other AWS services.
 - permissions_boundary: The ARN of the policy that is used to set the permissions boundary for the task role.
+- proxy_configuration: The proxy configuration details for the App Mesh proxy.
   EOF
 }
 
@@ -89,6 +91,11 @@ variable "scenario_simple_passed_roles" {
 }
 
 variable "scenario_multiple" {
+  type    = bool
+  default = false
+}
+
+variable "scenario_tf_unmanaged"{
   type    = bool
   default = false
 }

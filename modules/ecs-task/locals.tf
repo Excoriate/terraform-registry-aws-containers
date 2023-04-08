@@ -12,14 +12,15 @@ locals {
   */
   task_config_normalized = !local.is_enabled ? [] : [
     for t in var.task_config : {
-      name                           = lower(trimspace(t["name"]))
-      family                         = t["family"] == null ? "ecs-task-${lower(trimspace(t["name"]))}" : t["family"]
-      container_definition_from_json = t["container_definition_from_json"] == null ? "" : t["container_definition_from_json"]
-      container_definition_from_file = t["container_definition_from_file"] == null ? "" : t["container_definition_from_file"]
-      requires_compatibilities       = [t["type"]] // It defaults to 'Fargate' if not set.
-      network_mode                   = t["network_mode"] == null ? "awsvpc" : t["network_mode"]
-      cpu                            = t["cpu"] == null ? 256 : t["cpu"]
-      memory                         = t["memory"] == null ? 512 : t["memory"]
+      name                             = lower(trimspace(t["name"]))
+      family                           = t["family"] == null ? "ecs-task-${lower(trimspace(t["name"]))}" : t["family"]
+      container_definition_from_json   = t["container_definition_from_json"] == null ? "" : t["container_definition_from_json"]
+      container_definition_from_file   = t["container_definition_from_file"] == null ? "" : t["container_definition_from_file"]
+      requires_compatibilities         = [t["type"]] // It defaults to 'Fargate' if not set.
+      network_mode                     = t["network_mode"] == null ? "awsvpc" : t["network_mode"]
+      cpu                              = t["cpu"] == null ? 256 : t["cpu"]
+      memory                           = t["memory"] == null ? 512 : t["memory"]
+      manage_task_outside_of_terraform = t["manage_task_outside_of_terraform"] == null ? false : t["manage_task_outside_of_terraform"]
 
       proxy_configuration = t["proxy_configuration"] == null ? {} : {
         type           = t["proxy_configuration"]["type"] == null ? "APPMESH" : t["proxy_configuration"]["type"]
