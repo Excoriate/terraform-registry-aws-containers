@@ -1,7 +1,8 @@
 resource "aws_ecr_repository" "this" {
-  for_each             = local.ecr_config_to_create
+  for_each = local.ecr_config_to_create
   name                 = each.value["name"]
   image_tag_mutability = each.value["image_tag_mutability"]
+  force_delete = each.value["force_delete"]
 
   dynamic "encryption_configuration" {
     for_each = each.value["encryption_configuration"] == null ? [] : [each.value["encryption_configuration"]]

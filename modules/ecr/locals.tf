@@ -6,18 +6,14 @@ locals {
 
   ecr_config_normalised = !local.is_ecr_enabled ? [] : [for ecr_config in var.ecr_config : {
     name                     = lower(trimspace(ecr_config.name))
-    scan_on_push             = ecr_config.scan_on_push
-    image_tag_mutability     = upper(trimspace(ecr_config.image_tag_mutability))
-    encryption_configuration = ecr_config.encryption_configuration
+    scan_on_push             = ecr_config["scan_on_push"] == null ? true : ecr_config["scan_on_push"]
+    image_tag_mutability     = ecr_config["image_tag_mutability"] == null ? "MUTABLE" : upper(trimspace(ecr_config["image_tag_mutability"]))
+    encryption_configuration = ecr_config["encryption_configuration"]
+    force_delete            = ecr_config["force_delete"] == null ? false : ecr_config["force_delete"]
   }]
 
   // Create a list of maps, to make it suitable to the for_each
-  ecr_config_to_create = !local.is_ecr_enabled ? {} : { for k, v in local.ecr_config_normalised : k => {
-    name                     = v.name
-    scan_on_push             = v.scan_on_push
-    image_tag_mutability     = v.image_tag_mutability
-    encryption_configuration = v.encryption_configuration
-  } }
+  ecr_config_to_create = !local.is_ecr_enabled ? {} : { for ecr in local.ecr_config_normalised : ecr["name"] => ecr }
 
   /*
     Notes:

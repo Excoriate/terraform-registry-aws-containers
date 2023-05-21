@@ -27,6 +27,7 @@ variable "ecr_config" {
     name                 = string
     image_tag_mutability = optional(string, "IMMUTABLE")
     scan_on_push         = optional(bool, true)
+    force_delete         = optional(bool, false)
     encryption_configuration = optional(object({
       encryption_type = string
       kms_key         = optional(any, null)
@@ -39,6 +40,7 @@ variable "ecr_config" {
   - name: The name of the ECR repository.
   - image_tag_mutability: The tag mutability setting for the repository. Must be one of: IMMUTABLE, MUTABLE.
   - scan_on_push: Indicates whether images are scanned after being pushed to the repository (true) or not (false).
+  - force_delete: Indicates whether to force delete the repository (true) or not (false).
   - encryption_configuration: An object that contains the encryption configuration for the repository. Can be null.
     If not null, it must contain the following attributes:
     - encryption_type: The encryption type to use for the repository. Must be one of: AES256, KMS.
